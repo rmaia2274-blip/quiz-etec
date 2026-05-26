@@ -320,6 +320,11 @@
     <button class="btn btn-primary" id="btn-generate" onclick="generateAndCreate()">
       Gerar questões com IA e criar sala
     </button>
+    <div style="text-align:center;margin-top:12px">
+      <button onclick="resetConfig()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline">
+        Reconfigurar Firebase
+      </button>
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -797,16 +802,27 @@ window.exportResults = async function() {
 window.backToSetup = function() { showScreen('screen-setup'); }
 window.newQuiz = function() { questions=[]; currentQIdx=0; showScreen('screen-setup'); }
 
+// ── reconfigurar ───────────────────────────────────
+window.resetConfig = function() {
+  localStorage.removeItem('fbConfig');
+  showScreen('screen-config');
+}
+
 // ── init ───────────────────────────────────────────
-(function init() {
+(async function init() {
   const saved = loadConfig();
-  if (saved) {
-    try {
-      const app = initializeApp(saved, 'main');
-      db = getDatabase(app);
-      showScreen('screen-setup');
-    } catch(e) { showScreen('screen-config'); }
-  } else { showScreen('screen-config'); }
+  if (!saved) { showScreen('screen-config'); return; }
+  try {
+    const app = initializeApp(saved, 'main');
+    db = getDatabase(app);
+    // testa conexão real antes de avançar
+    const testRef = ref(db, '.info/connected');
+    const snap = await get(testRef);
+    showScreen('screen-setup');
+  } catch(e) {
+    localStorage.removeItem('fbConfig');
+    showScreen('screen-config');
+  }
 })();
 </script>
 </body>
