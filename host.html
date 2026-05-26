@@ -258,7 +258,7 @@
         <div><label>App ID</label><input type="text" id="fb-appId" placeholder="1:123:web:abc"></div>
       </div>
       <div class="mt16">
-        <button class="btn btn-primary" onclick="saveConfig()">Salvar e continuar</button>
+        <button class="btn btn-primary" id="btn-save-config">Salvar e continuar</button>
       </div>
       <p id="config-error" style="color:var(--red);font-size:13px;margin-top:10px;display:none"></p>
     </div>
@@ -317,11 +317,11 @@
       </div>
     </div>
 
-    <button class="btn btn-primary" id="btn-generate" onclick="generateAndCreate()">
+    <button class="btn btn-primary" id="btn-generate">
       Gerar questões com IA e criar sala
     </button>
     <div style="text-align:center;margin-top:12px">
-      <button onclick="resetConfig()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline">
+      <button id="btn-reset-config" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline">
         Reconfigurar Firebase
       </button>
     </div>
@@ -369,8 +369,8 @@
     </div>
 
     <div class="grid2 mt16">
-      <button class="btn btn-secondary" onclick="backToSetup()">Cancelar</button>
-      <button class="btn btn-primary" id="btn-start-quiz" onclick="startQuiz()">Iniciar quiz</button>
+      <button class="btn btn-secondary" id="btn-back-setup">Cancelar</button>
+      <button class="btn btn-primary" id="btn-start-quiz" id="btn-start-quiz">Iniciar quiz</button>
     </div>
   </div>
 
@@ -399,7 +399,7 @@
       <div class="live-answers" id="live-answers"></div>
     </div>
 
-    <button class="btn btn-success" id="btn-reveal" onclick="revealAnswer()" style="width:100%;margin-top:8px">
+    <button class="btn btn-success" id="btn-reveal" id="btn-reveal" style="width:100%;margin-top:8px">
       Revelar resposta antecipadamente
     </button>
   </div>
@@ -421,7 +421,7 @@
     </div>
 
     <div class="mt16">
-      <button class="btn btn-primary" id="btn-next-q" onclick="nextQuestion()">Próxima questão</button>
+      <button class="btn btn-primary" id="btn-next-q" id="btn-next-q">Próxima questão</button>
     </div>
   </div>
 
@@ -442,8 +442,8 @@
       <div id="final-gabarito"></div>
     </div>
     <div class="grid2 mt16">
-      <button class="btn btn-secondary" onclick="newQuiz()">Novo quiz</button>
-      <button class="btn btn-primary" onclick="exportResults()">Exportar CSV</button>
+      <button class="btn btn-secondary" id="btn-new-quiz">Novo quiz</button>
+      <button class="btn btn-primary" id="btn-export">Exportar CSV</button>
     </div>
   </div>
 
@@ -828,6 +828,20 @@ window.resetConfig = function() {
     showScreen('screen-config');
   }
 })();
+
+// ── event bindings (evita problemas com type=module scope) ──
+document.addEventListener('DOMContentLoaded', () => {
+  const bind = (id, fn) => { const el = document.getElementById(id); if(el) el.addEventListener('click', fn); };
+  bind('btn-save-config',  () => saveConfig());
+  bind('btn-generate',     () => generateAndCreate());
+  bind('btn-reset-config', () => resetConfig());
+  bind('btn-back-setup',   () => backToSetup());
+  bind('btn-start-quiz',   () => startQuiz());
+  bind('btn-reveal',       () => revealAnswer());
+  bind('btn-next-q',       () => nextQuestion());
+  bind('btn-new-quiz',     () => newQuiz());
+  bind('btn-export',       () => exportResults());
+});
 </script>
 </body>
 </html>
