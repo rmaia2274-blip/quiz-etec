@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz ETEC — Painel do Professor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: rgba(255,255,255,0.08);
+    --accent: #6c5ce7;
+    --accent2: #a29bfe;
+    --green: #00b894;
+    --red: #d63031;
+    --amber: #fdcb6e;
+    --text: #f0f0f8;
+    --muted: #8888aa;
+    --radius: 12px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    font-size: 15px;
+  }
+  h1,h2,h3,.display { font-family: 'Syne', sans-serif; }
+
+  /* ── layout ── */
+  .app { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── topbar ── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent2); }
+  .badge-role {
+    background: rgba(108,92,231,0.18); color: var(--accent2);
+    border: 1px solid rgba(108,92,231,0.3);
+    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  }
+
+  /* ── cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+
+  /* ── forms ── */
+  label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
+  input[type=text], input[type=number], select, textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 14px; padding: 10px 14px; outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  select option { background: #1c1c27; }
+  textarea { resize: vertical; min-height: 80px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* ── chips ── */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .chip {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 20px; padding: 5px 14px;
+    font-size: 12px; cursor: pointer; transition: all 0.15s;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent2); }
+  .chip.sel { background: rgba(108,92,231,0.2); border-color: var(--accent); color: var(--accent2); }
+
+  /* ── buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: none; border-radius: 8px; padding: 11px 20px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; text-decoration: none;
+  }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; justify-content: center; font-size: 15px; padding: 13px; }
+  .btn-primary:hover { background: #7c6cf0; }
+  .btn-primary:disabled { background: var(--surface2); color: var(--muted); cursor: not-allowed; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent2); }
+  .btn-danger { background: rgba(214,48,49,0.15); color: var(--red); border: 1px solid rgba(214,48,49,0.3); }
+  .btn-success { background: rgba(0,184,148,0.15); color: var(--green); border: 1px solid rgba(0,184,148,0.3); }
+
+  /* ── config firebase ── */
+  #config-notice {
+    background: rgba(253,203,110,0.1); border: 1px solid rgba(253,203,110,0.3);
+    border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px;
+    font-size: 13px; color: var(--amber); line-height: 1.6;
+  }
+  #config-notice code {
+    background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px;
+    font-family: monospace; font-size: 12px;
+  }
+  .firebase-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+
+  /* ── lobby ── */
+  .room-code-display {
+    text-align: center; padding: 24px;
+    background: linear-gradient(135deg, rgba(108,92,231,0.15), rgba(162,155,254,0.08));
+    border: 1px solid rgba(108,92,231,0.3);
+    border-radius: var(--radius); margin-bottom: 20px;
+  }
+  .room-code {
+    font-family: 'Syne', sans-serif; font-size: 56px; font-weight: 800;
+    letter-spacing: 8px; color: var(--accent2); line-height: 1;
+  }
+  .room-url { font-size: 12px; color: var(--muted); margin-top: 8px; word-break: break-all; }
+  .room-url a { color: var(--accent2); }
+  .players-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 12px; min-height: 60px; }
+  .player-tile {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; text-align: center;
+    font-size: 13px; animation: popIn 0.3s ease;
+  }
+  .player-tile .avatar {
+    width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px;
+  }
+  @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  /* ── questão ao vivo ── */
+  .live-question-text {
+    font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700;
+    line-height: 1.4; margin-bottom: 20px; color: var(--text);
+  }
+  .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .answer-card {
+    padding: 14px 18px; border-radius: 10px;
+    font-weight: 500; font-size: 14px; border: 2px solid transparent;
+  }
+  .answer-card.a { background: rgba(162,155,254,0.15); border-color: rgba(162,155,254,0.4); color: var(--accent2); }
+  .answer-card.b { background: rgba(0,184,148,0.12); border-color: rgba(0,184,148,0.35); color: var(--green); }
+  .answer-card.c { background: rgba(253,203,110,0.12); border-color: rgba(253,203,110,0.35); color: var(--amber); }
+  .answer-card.d { background: rgba(214,48,49,0.12); border-color: rgba(214,48,49,0.35); color: var(--red); }
+
+  /* ── timer ── */
+  .timer-wrap { text-align: center; margin-bottom: 20px; }
+  .timer-big {
+    font-family: 'Syne', sans-serif; font-size: 72px; font-weight: 800;
+    line-height: 1; transition: color 0.5s;
+  }
+  .timer-big.urgent { color: var(--red); }
+  .timer-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .timer-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 1s linear, background 0.5s; }
+  .timer-fill.urgent { background: var(--red); }
+
+  /* ── respostas ao vivo ── */
+  .live-answers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  .live-answer-bar {
+    text-align: center; border-radius: 8px; padding: 12px 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+  }
+  .live-answer-bar .count { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
+  .live-answer-bar .lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .live-answer-bar .bar-inner { height: 6px; border-radius: 3px; margin-top: 8px; min-width: 4px; transition: width 0.3s; }
+
+  /* ── placar ── */
+  .scoreboard { }
+  .score-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-radius: 8px; margin-bottom: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    transition: all 0.3s;
+  }
+  .score-row.gold { background: rgba(253,203,110,0.12); border-color: rgba(253,203,110,0.35); }
+  .score-row.silver { background: rgba(162,155,254,0.1); border-color: rgba(162,155,254,0.25); }
+  .score-row.bronze { background: rgba(214,48,49,0.08); border-color: rgba(214,48,49,0.2); }
+  .pos { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--muted); min-width: 32px; }
+  .score-pts { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; color: var(--accent2); }
+
+  /* ── loading ── */
+  .loading {
+    text-align: center; padding: 40px;
+    color: var(--muted); font-size: 14px;
+  }
+  .spinner {
+    width: 36px; height: 36px; border: 3px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── progress ── */
+  .q-progress { display: flex; gap: 6px; margin-bottom: 20px; }
+  .q-dot { width: 28px; height: 6px; border-radius: 3px; background: var(--surface2); flex: 1; transition: background 0.3s; }
+  .q-dot.done { background: var(--green); }
+  .q-dot.active { background: var(--accent); }
+
+  /* ── misc ── */
+  .tag { display: inline-block; font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 500; }
+  .tag-green { background: rgba(0,184,148,0.15); color: var(--green); border: 1px solid rgba(0,184,148,0.3); }
+  .tag-amber { background: rgba(253,203,110,0.12); color: var(--amber); border: 1px solid rgba(253,203,110,0.3); }
+  .tag-purple { background: rgba(108,92,231,0.15); color: var(--accent2); border: 1px solid rgba(108,92,231,0.3); }
+  .flex-row { display: flex; align-items: center; gap: 10px; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+  .mt8 { margin-top: 8px; }
+  .mt16 { margin-top: 16px; }
+  .mt24 { margin-top: 24px; }
+  .mb8 { margin-bottom: 8px; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .small { font-size: 12px; color: var(--muted); }
+  .section-gap { margin-bottom: 24px; }
+
+  .feedback-reveal {
+    background: rgba(0,184,148,0.1); border: 1px solid rgba(0,184,148,0.3);
+    border-radius: 10px; padding: 16px 20px; margin-top: 12px;
+    font-size: 14px; line-height: 1.6; color: var(--text);
+  }
+  .feedback-reveal strong { color: var(--green); font-family: 'Syne', sans-serif; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="logo">Quiz<span>ETEC</span></div>
+    <span class="badge-role">Painel do Professor</span>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: FIREBASE CONFIG
+  ══════════════════════════════════════════ -->
+  <div id="screen-config" class="screen active">
+    <div id="config-notice">
+      <strong>Configure o Firebase antes de começar.</strong><br>
+      1. Acesse <a href="https://console.firebase.google.com" target="_blank" style="color:var(--amber)">console.firebase.google.com</a> → crie um projeto → adicione um app Web.<br>
+      2. Em <code>Realtime Database</code> → crie o banco → copie a URL (<code>https://SEU-PROJETO.firebaseio.com</code>).<br>
+      3. Em <code>Rules</code>, cole: <code>{ "rules": { ".read": true, ".write": true } }</code> (para testes).<br>
+      4. Preencha os campos abaixo e clique em Salvar.
+    </div>
+    <div class="card">
+      <div class="card-title">Credenciais do Firebase</div>
+      <div class="firebase-fields">
+        <div><label>API Key</label><input type="text" id="fb-apiKey" placeholder="AIzaSy..."></div>
+        <div><label>Auth Domain</label><input type="text" id="fb-authDomain" placeholder="projeto.firebaseapp.com"></div>
+        <div><label>Database URL</label><input type="text" id="fb-databaseURL" placeholder="https://projeto-default-rtdb.firebaseio.com"></div>
+        <div><label>Project ID</label><input type="text" id="fb-projectId" placeholder="meu-projeto"></div>
+        <div><label>Storage Bucket</label><input type="text" id="fb-storageBucket" placeholder="projeto.appspot.com"></div>
+        <div><label>Messaging Sender ID</label><input type="text" id="fb-messagingSenderId" placeholder="123456789"></div>
+        <div><label>App ID</label><input type="text" id="fb-appId" placeholder="1:123:web:abc"></div>
+      </div>
+      <div class="mt16">
+        <button class="btn btn-primary" onclick="saveConfig()">Salvar e continuar</button>
+      </div>
+      <p id="config-error" style="color:var(--red);font-size:13px;margin-top:10px;display:none"></p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: SETUP DO QUIZ
+  ══════════════════════════════════════════ -->
+  <div id="screen-setup" class="screen">
+    <div class="card">
+      <div class="card-title">Tema do quiz — Matemática ETEC</div>
+      <div class="mb8"><label>Subtópico</label>
+        <input type="text" id="inp-tema" placeholder="Ex: equações do 1º grau, frações, geometria plana...">
+      </div>
+      <div class="chips" id="chips">
+        <span class="chip" data-v="frações e proporções">Frações</span>
+        <span class="chip" data-v="equações do 1º grau">Eq. 1º grau</span>
+        <span class="chip" data-v="equações do 2º grau e fórmula de Bhaskara">Eq. 2º grau</span>
+        <span class="chip" data-v="geometria plana: área e perímetro">Geometria plana</span>
+        <span class="chip" data-v="porcentagem e juros simples">Porcentagem</span>
+        <span class="chip" data-v="funções do 1º e 2º grau">Funções</span>
+        <span class="chip" data-v="trigonometria: seno, cosseno, tangente">Trigonometria</span>
+        <span class="chip" data-v="potenciação e radiciação">Potenciação</span>
+        <span class="chip" data-v="progressão aritmética e geométrica">PA e PG</span>
+        <span class="chip" data-v="conjuntos numéricos e operações">Conjuntos</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Configurações</div>
+      <div class="grid3">
+        <div><label>Nº de questões</label>
+          <select id="inp-nq">
+            <option value="3">3 (demo)</option>
+            <option value="5" selected>5</option>
+            <option value="8">8</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+        <div><label>Tempo por questão</label>
+          <select id="inp-tempo">
+            <option value="15">15 seg</option>
+            <option value="20" selected>20 seg</option>
+            <option value="30">30 seg</option>
+            <option value="45">45 seg</option>
+          </select>
+        </div>
+        <div><label>Nível</label>
+          <select id="inp-nivel">
+            <option value="básico">Básico</option>
+            <option value="intermediário" selected>Intermediário</option>
+            <option value="avançado">Avançado</option>
+            <option value="misto">Misto</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btn-generate" onclick="generateAndCreate()">
+      Gerar questões com IA e criar sala
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: GERANDO
+  ══════════════════════════════════════════ -->
+  <div id="screen-generating" class="screen">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div id="gen-msg">Gerando questões com IA...</div>
+      <div id="gen-sub" class="small mt8"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: LOBBY
+  ══════════════════════════════════════════ -->
+  <div id="screen-lobby" class="screen">
+    <div class="room-code-display">
+      <div class="small" style="margin-bottom:8px;letter-spacing:2px;text-transform:uppercase">Código da sala</div>
+      <div class="room-code" id="room-code-display">----</div>
+      <div class="room-url mt8" id="room-url-display"></div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between mb8">
+        <div class="card-title" style="margin-bottom:0">Aguardando jogadores</div>
+        <span class="tag tag-green" id="player-count">0 conectados</span>
+      </div>
+      <div class="players-grid" id="players-grid">
+        <div class="small" style="color:var(--muted);padding:12px 0">Nenhum jogador ainda...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Quiz pronto</div>
+      <div class="small">
+        <span id="lobby-tema"></span> &nbsp;·&nbsp;
+        <span id="lobby-nq"></span> questões &nbsp;·&nbsp;
+        <span id="lobby-tempo"></span> seg cada &nbsp;·&nbsp;
+        <span id="lobby-nivel"></span>
+      </div>
+    </div>
+
+    <div class="grid2 mt16">
+      <button class="btn btn-secondary" onclick="backToSetup()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-start-quiz" onclick="startQuiz()">Iniciar quiz</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: QUESTÃO AO VIVO
+  ══════════════════════════════════════════ -->
+  <div id="screen-question" class="screen">
+    <div class="flex-between mb8">
+      <div class="q-progress" id="q-progress"></div>
+      <span class="tag tag-purple" id="q-answered-count">0 responderam</span>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="small mb8" id="q-num-label">Questão 1 de 5</div>
+      <div class="live-question-text" id="q-text-display"></div>
+      <div class="answers-grid" id="q-answers-display"></div>
+    </div>
+
+    <div class="timer-wrap card" style="padding:16px">
+      <div class="timer-big" id="timer-big">20</div>
+      <div class="timer-bar"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="card-title">Respostas em tempo real</div>
+      <div class="live-answers" id="live-answers"></div>
+    </div>
+
+    <button class="btn btn-success" id="btn-reveal" onclick="revealAnswer()" style="width:100%;margin-top:8px">
+      Revelar resposta antecipadamente
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: REVELAÇÃO
+  ══════════════════════════════════════════ -->
+  <div id="screen-reveal" class="screen">
+    <div class="card" style="margin-bottom:12px">
+      <div class="small mb8" id="rev-q-label"></div>
+      <div class="live-question-text" id="rev-q-text"></div>
+      <div class="answers-grid" id="rev-answers"></div>
+      <div class="feedback-reveal" id="rev-explanation"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Resultado desta questão</div>
+      <div class="live-answers" id="rev-answers-count"></div>
+    </div>
+
+    <div class="mt16">
+      <button class="btn btn-primary" id="btn-next-q" onclick="nextQuestion()">Próxima questão</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SCREEN: PLACAR FINAL
+  ══════════════════════════════════════════ -->
+  <div id="screen-final" class="screen">
+    <div style="text-align:center;padding:24px 0 16px">
+      <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800">Quiz finalizado!</div>
+      <div class="small mt8" id="final-meta"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Placar final</div>
+      <div class="scoreboard" id="final-scoreboard"></div>
+    </div>
+    <div class="card mt16">
+      <div class="card-title">Gabarito</div>
+      <div id="final-gabarito"></div>
+    </div>
+    <div class="grid2 mt16">
+      <button class="btn btn-secondary" onclick="newQuiz()">Novo quiz</button>
+      <button class="btn btn-primary" onclick="exportResults()">Exportar CSV</button>
+    </div>
+  </div>
+
+</div><!-- .app -->
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, get, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// ── state ──────────────────────────────────────────
+let db, roomCode, roomRef;
+let questions = [];
+let currentQIdx = 0;
+let timerInterval = null;
+let timeLeft = 20;
+let totalTime = 20;
+let playersCache = {};
+let answersCache = {};
+let quizConfig = {};
+
+// ── colors for avatars ──────────────────────────────
+const COLORS = [
+  ['#6c5ce7','#EEEDFE'],['#00b894','#E1F5EE'],['#fdcb6e','#2C2C2A'],
+  ['#d63031','#FCEBEB'],['#a29bfe','#3C3489'],['#55efc4','#085041']
+];
+function avatarColor(name) {
+  let h = 0; for (let c of name) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return COLORS[h % COLORS.length];
+}
+
+// ── config persistence ─────────────────────────────
+function loadConfig() {
+  const saved = localStorage.getItem('fbConfig');
+  if (!saved) return null;
+  return JSON.parse(saved);
+}
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+window.saveConfig = async function() {
+  const fields = ['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId'];
+  const cfg = {};
+  for (const f of fields) {
+    const v = document.getElementById('fb-'+f).value.trim();
+    if (!v && f !== 'storageBucket' && f !== 'messagingSenderId') {
+      showError('config-error', 'Preencha: '+f); return;
+    }
+    cfg[f] = v;
+  }
+  try {
+    const app = initializeApp(cfg, 'main');
+    db = getDatabase(app);
+    const testRef = ref(db, '.info/connected');
+    await get(testRef);
+    localStorage.setItem('fbConfig', JSON.stringify(cfg));
+    showScreen('screen-setup');
+  } catch(e) {
+    showError('config-error', 'Erro ao conectar: '+e.message);
+  }
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.style.display = 'block'; el.textContent = msg;
+  setTimeout(() => el.style.display='none', 5000);
+}
+
+// ── chips ─────────────────────────────────────────
+document.querySelectorAll('.chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(x => x.classList.remove('sel'));
+    c.classList.add('sel');
+    document.getElementById('inp-tema').value = c.dataset.v;
+  });
+});
+
+// ── generate + create room ─────────────────────────
+window.generateAndCreate = async function() {
+  const tema = document.getElementById('inp-tema').value.trim();
+  if (!tema) { document.getElementById('inp-tema').focus(); return; }
+  const nq = parseInt(document.getElementById('inp-nq').value);
+  const tempo = parseInt(document.getElementById('inp-tempo').value);
+  const nivel = document.getElementById('inp-nivel').value;
+  totalTime = tempo;
+  quizConfig = { tema, nq, tempo, nivel };
+
+  showScreen('screen-generating');
+  document.getElementById('gen-msg').textContent = 'Gerando '+nq+' questões com IA...';
+  document.getElementById('gen-sub').textContent = 'Tema: '+tema+' · Nível: '+nivel;
+
+  const prompt = `Crie exatamente ${nq} questões de múltipla escolha de Matemática para o Ensino Médio Técnico (ETEC) sobre "${tema}", nível ${nivel}.
+
+Regras:
+- Cada questão tem exatamente 4 alternativas (A, B, C, D)
+- Apenas uma alternativa correta
+- Inclua contas e cálculos quando adequado ao tema
+- A explicação deve ser clara, máximo 80 palavras
+
+Responda APENAS com JSON válido, sem texto antes ou depois:
+{"questoes":[{"enunciado":"texto","alternativas":["A) ...","B) ...","C) ...","D) ..."],"correta":0,"explicacao":"texto"}]}
+
+"correta" é o índice 0-3 da alternativa correta.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const txt = data.content.map(b => b.text||'').join('').replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(txt);
+    questions = parsed.questoes;
+    await createRoom();
+  } catch(e) {
+    showScreen('screen-generating');
+    document.getElementById('gen-msg').textContent = 'Erro: '+e.message;
+    document.getElementById('gen-sub').textContent = 'Voltando...';
+    setTimeout(() => showScreen('screen-setup'), 3000);
+  }
+}
+
+async function createRoom() {
+  roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+  roomRef = ref(db, 'rooms/'+roomCode);
+  await set(roomRef, {
+    status: 'lobby',
+    config: quizConfig,
+    questions: questions.map((q,i) => ({
+      enunciado: q.enunciado,
+      alternativas: q.alternativas,
+      correta: q.correta,
+      explicacao: q.explicacao,
+      idx: i
+    })),
+    currentQ: -1,
+    createdAt: Date.now()
+  });
+  setupLobby();
+}
+
+function setupLobby() {
+  document.getElementById('room-code-display').textContent = roomCode;
+  const playerUrl = window.location.href.replace('host.html','player.html') + '?sala='+roomCode;
+  document.getElementById('room-url-display').innerHTML =
+    'URL do aluno: <a href="'+playerUrl+'" target="_blank">'+playerUrl+'</a>';
+  document.getElementById('lobby-tema').textContent = quizConfig.tema;
+  document.getElementById('lobby-nq').textContent = questions.length;
+  document.getElementById('lobby-tempo').textContent = quizConfig.tempo;
+  document.getElementById('lobby-nivel').textContent = quizConfig.nivel;
+  showScreen('screen-lobby');
+
+  onValue(ref(db, 'rooms/'+roomCode+'/players'), snap => {
+    playersCache = snap.val() || {};
+    renderPlayers();
+  });
+}
+
+function renderPlayers() {
+  const grid = document.getElementById('players-grid');
+  const count = Object.keys(playersCache).length;
+  document.getElementById('player-count').textContent = count+' conectado'+(count!==1?'s':'');
+  if (count === 0) {
+    grid.innerHTML = '<div class="small" style="color:var(--muted);padding:12px 0">Nenhum jogador ainda...</div>';
+    return;
+  }
+  grid.innerHTML = Object.values(playersCache).map(p => {
+    const [bg, fg] = avatarColor(p.name);
+    return `<div class="player-tile">
+      <div class="avatar" style="background:${bg};color:${fg}">${p.name[0].toUpperCase()}</div>
+      <div style="font-size:13px">${p.name}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── start quiz ─────────────────────────────────────
+window.startQuiz = async function() {
+  currentQIdx = 0;
+  await update(roomRef, { status: 'playing', currentQ: 0 });
+  showQuestion(0);
+}
+
+function buildQProgress() {
+  const prog = document.getElementById('q-progress');
+  prog.innerHTML = questions.map((_, i) =>
+    `<div class="q-dot ${i < currentQIdx ? 'done' : i === currentQIdx ? 'active' : ''}"></div>`
+  ).join('');
+}
+
+const LABELS = ['A','B','C','D'];
+const CLASSES = ['a','b','c','d'];
+
+function showQuestion(idx) {
+  clearInterval(timerInterval);
+  answersCache = {};
+  currentQIdx = idx;
+  const q = questions[idx];
+  document.getElementById('q-num-label').textContent = 'Questão '+(idx+1)+' de '+questions.length;
+  document.getElementById('q-text-display').textContent = q.enunciado;
+  document.getElementById('q-answered-count').textContent = '0 responderam';
+
+  document.getElementById('q-answers-display').innerHTML = q.alternativas.map((a,i) =>
+    `<div class="answer-card ${CLASSES[i]}">${a}</div>`
+  ).join('');
+
+  buildQProgress();
+  initLiveAnswers(0,0,0,0);
+  showScreen('screen-question');
+  startTimer(idx);
+
+  onValue(ref(db, 'rooms/'+roomCode+'/answers/q'+idx), snap => {
+    answersCache = snap.val() || {};
+    const counts = [0,0,0,0];
+    Object.values(answersCache).forEach(a => { if(a.answer>=0&&a.answer<=3) counts[a.answer]++; });
+    const total = Object.keys(playersCache).length;
+    initLiveAnswers(...counts);
+    document.getElementById('q-answered-count').textContent =
+      Object.keys(answersCache).length+' responderam';
+  }, { onlyOnce: false });
+}
+
+function initLiveAnswers(a,b,c,d) {
+  const total = Math.max(1, Object.keys(playersCache).length);
+  const counts = [a,b,c,d];
+  const colors = ['#a29bfe','#00b894','#fdcb6e','#d63031'];
+  document.getElementById('live-answers').innerHTML = counts.map((n,i) =>
+    `<div class="live-answer-bar">
+      <div class="count" style="color:${colors[i]}">${n}</div>
+      <div class="lbl">${LABELS[i]}</div>
+      <div class="bar-inner" style="background:${colors[i]};width:${Math.round((n/total)*100)}%"></div>
+    </div>`
+  ).join('');
+}
+
+function startTimer(idx) {
+  timeLeft = totalTime;
+  updateTimerUI();
+  timerInterval = setInterval(async () => {
+    timeLeft--;
+    updateTimerUI();
+    if (timeLeft <= 0) { clearInterval(timerInterval); await autoReveal(idx); }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const pct = Math.round((timeLeft / totalTime) * 100);
+  const urgent = timeLeft <= 5;
+  const big = document.getElementById('timer-big');
+  const fill = document.getElementById('timer-fill');
+  big.textContent = timeLeft;
+  big.classList.toggle('urgent', urgent);
+  fill.style.width = pct+'%';
+  fill.classList.toggle('urgent', urgent);
+}
+
+window.revealAnswer = async function() { clearInterval(timerInterval); await autoReveal(currentQIdx); }
+
+async function autoReveal(idx) {
+  await update(ref(db, 'rooms/'+roomCode), { status: 'reveal', currentQ: idx });
+  const q = questions[idx];
+  const counts = [0,0,0,0];
+  Object.values(answersCache).forEach(a => { if(a.answer>=0&&a.answer<=3) counts[a.answer]++; });
+
+  // score players
+  const total = totalTime;
+  const updates = {};
+  Object.entries(answersCache).forEach(([pid, a]) => {
+    if (a.answer === q.correta) {
+      const pts = Math.round(500 + (a.timeLeft / total) * 500);
+      updates['players/'+pid+'/score'] = (playersCache[pid]?.score||0) + pts;
+    }
+  });
+  if (Object.keys(updates).length > 0) await update(roomRef, updates);
+
+  renderReveal(idx, counts);
+  showScreen('screen-reveal');
+
+  const isLast = idx >= questions.length - 1;
+  document.getElementById('btn-next-q').textContent = isLast ? 'Ver placar final' : 'Próxima questão';
+}
+
+function renderReveal(idx, counts) {
+  const q = questions[idx];
+  document.getElementById('rev-q-label').textContent = 'Questão '+(idx+1)+' de '+questions.length;
+  document.getElementById('rev-q-text').textContent = q.enunciado;
+  document.getElementById('rev-answers').innerHTML = q.alternativas.map((a,i) => {
+    const isCorrect = i === q.correta;
+    const style = isCorrect
+      ? 'background:rgba(0,184,148,0.2);border-color:rgba(0,184,148,0.6);color:#55efc4'
+      : 'opacity:0.45';
+    return `<div class="answer-card ${CLASSES[i]}" style="${style}">${isCorrect?'✓ ':''} ${a}</div>`;
+  }).join('');
+  document.getElementById('rev-explanation').innerHTML =
+    `<strong>Resposta correta: ${LABELS[q.correta]})</strong><br>${q.explicacao}`;
+
+  const total = Math.max(1, Object.keys(playersCache).length);
+  const colors = ['#a29bfe','#00b894','#fdcb6e','#d63031'];
+  document.getElementById('rev-answers-count').innerHTML = counts.map((n,i) =>
+    `<div class="live-answer-bar" style="${i===q.correta?'border:1px solid rgba(0,184,148,0.4)':''}">
+      <div class="count" style="color:${colors[i]}">${n}</div>
+      <div class="lbl">${LABELS[i]}</div>
+      <div class="bar-inner" style="background:${colors[i]};width:${Math.round((n/total)*100)}%"></div>
+    </div>`
+  ).join('');
+}
+
+window.nextQuestion = async function() {
+  const next = currentQIdx + 1;
+  if (next >= questions.length) { showFinal(); return; }
+  await update(roomRef, { status: 'playing', currentQ: next });
+  showQuestion(next);
+}
+
+// ── final ──────────────────────────────────────────
+async function showFinal() {
+  await update(roomRef, { status: 'final' });
+  const snap = await get(ref(db, 'rooms/'+roomCode+'/players'));
+  const players = snap.val() || {};
+  const sorted = Object.values(players).sort((a,b) => (b.score||0)-(a.score||0));
+  showScreen('screen-final');
+  document.getElementById('final-meta').textContent =
+    quizConfig.tema+' · '+questions.length+' questões · '+Object.keys(players).length+' jogadores';
+
+  const medals = ['🥇','🥈','🥉'];
+  const rowClass = ['gold','silver','bronze'];
+  document.getElementById('final-scoreboard').innerHTML = sorted.map((p,i) => `
+    <div class="score-row ${rowClass[i]||''}">
+      <div class="flex-row">
+        <div class="pos">${i<3?medals[i]:i+1}</div>
+        <span>${p.name}</span>
+      </div>
+      <span class="score-pts">${(p.score||0).toLocaleString()}</span>
+    </div>`).join('');
+
+  document.getElementById('final-gabarito').innerHTML = questions.map((q,i) =>
+    `<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
+      <span style="color:var(--muted)">${i+1}.</span> ${q.enunciado.substring(0,80)}${q.enunciado.length>80?'...':''}
+      <span style="margin-left:8px" class="tag tag-green">${LABELS[q.correta]}</span>
+    </div>`
+  ).join('');
+}
+
+window.exportResults = async function() {
+  const snap = await get(ref(db, 'rooms/'+roomCode+'/players'));
+  const players = Object.values(snap.val()||{}).sort((a,b)=>(b.score||0)-(a.score||0));
+  let csv = 'Posição,Nome,Pontuação\n';
+  players.forEach((p,i) => { csv += `${i+1},"${p.name}",${p.score||0}\n`; });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'quiz_resultados_'+roomCode+'.csv'; a.click();
+}
+
+window.backToSetup = function() { showScreen('screen-setup'); }
+window.newQuiz = function() { questions=[]; currentQIdx=0; showScreen('screen-setup'); }
+
+// ── init ───────────────────────────────────────────
+(function init() {
+  const saved = loadConfig();
+  if (saved) {
+    try {
+      const app = initializeApp(saved, 'main');
+      db = getDatabase(app);
+      showScreen('screen-setup');
+    } catch(e) { showScreen('screen-config'); }
+  } else { showScreen('screen-config'); }
+})();
+</script>
+</body>
+</html>
