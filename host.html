@@ -453,15 +453,20 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-// aliases para manter compatibilidade com o código existente
-function initializeApp(cfg, name) { return firebase.initializeApp(cfg, name); }
-function getDatabase(app) { return app.database(); }
+// aliases compat Firebase
+function initializeApp(cfg, name) {
+  try { return firebase.app(name); } catch(e) { return firebase.initializeApp(cfg, name); }
+}
+function getDatabase(app) { return firebase.database(app); }
 function ref(db, path) { return db.ref(path); }
 function set(r, val) { return r.set(val); }
-function get(r) { return r.get(); }
+function get(r) { return r.once('value'); }
 function update(r, val) { return r.update(val); }
 function remove(r) { return r.remove(); }
-function onValue(r, cb) { r.on('value', snap => cb(snap)); return () => r.off('value'); }
+function onValue(r, cb, opts) {
+  if (opts && opts.onlyOnce) { r.once('value', snap => cb(snap)); }
+  else { r.on('value', snap => cb(snap)); }
+}
 function push(r) { return r.push(); }
 
 // ── state ──────────────────────────────────────────
