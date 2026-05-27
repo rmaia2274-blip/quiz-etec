@@ -249,9 +249,9 @@
     <div class="card">
       <div class="card-title">Credenciais do Firebase</div>
       <div style="margin-bottom:16px;padding:14px;background:rgba(253,203,110,0.08);border:1px solid rgba(253,203,110,0.3);border-radius:8px">
-        <label style="color:var(--amber);margin-bottom:6px">Chave de API Anthropic</label>
-        <input type="text" id="anthropic-key" placeholder="sk-ant-..." style="font-family:monospace">
-        <div style="font-size:11px;color:var(--muted);margin-top:6px">Obtenha em <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--amber)">console.anthropic.com/settings/keys</a></div>
+        <label style="color:var(--amber);margin-bottom:6px">Chave de API Google Gemini (gratuita)</label>
+        <input type="text" id="gemini-key" placeholder="AIza..." style="font-family:monospace">
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Obtenha gratuitamente em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--amber)">aistudio.google.com/apikey</a></div>
       </div>
       <div class="firebase-fields">
         <div><label>API Key Firebase</label><input type="text" id="fb-apiKey" placeholder="AIzaSy..."></div>
@@ -507,9 +507,9 @@ function showScreen(id) {
 }
 
 window.saveConfig = async function() {
-  const anthropicKey = document.getElementById('anthropic-key').value.trim();
-  if (!anthropicKey || !anthropicKey.startsWith('sk-ant-')) {
-    showError('config-error', 'Chave Anthropic inválida. Deve começar com sk-ant-'); return;
+  const geminiKey = document.getElementById('gemini-key').value.trim();
+  if (!geminiKey || !geminiKey.startsWith('AIza')) {
+    showError('config-error', 'Chave Gemini inválida. Deve começar com AIza'); return;
   }
   const fields = ['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId'];
   const cfg = {};
@@ -520,7 +520,7 @@ window.saveConfig = async function() {
     }
     cfg[f] = v;
   }
-  localStorage.setItem('anthropicKey', anthropicKey);
+  localStorage.setItem('geminiKey', geminiKey);
   try {
     const app = initializeApp(cfg, 'main');
     db = getDatabase(app);
@@ -576,19 +576,14 @@ Responda APENAS com JSON válido, sem texto antes ou depois:
 "correta" é o índice 0-3 da alternativa correta.`;
 
   try {
-    const anthropicKey = localStorage.getItem('anthropicKey') || '';
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const geminiKey = localStorage.getItem('geminiKey') || '';
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-ipc': 'true'
-      },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
     const data = await res.json();
-    const txt = data.content.map(b => b.text||'').join('').replace(/```json|```/g,'').trim();
+    const txt = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').replace(/```json|```/g,'').trim();
     const parsed = JSON.parse(txt);
     questions = parsed.questoes;
     await createRoom();
@@ -842,8 +837,8 @@ window.resetConfig = function() {
 // ── init ───────────────────────────────────────────
 function initApp() {
   // pre-popular campos se houver config salva
-  const savedKey = localStorage.getItem('anthropicKey');
-  if (savedKey) { const el = document.getElementById('anthropic-key'); if(el) el.value = savedKey; }
+  const savedKey = localStorage.getItem('geminiKey');
+  if (savedKey) { const el = document.getElementById('gemini-key'); if(el) el.value = savedKey; }
   const saved = loadConfig();
   if (!saved) { showScreen('screen-config'); return; }
   // valida campos obrigatórios antes de inicializar
