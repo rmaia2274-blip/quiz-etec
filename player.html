@@ -415,6 +415,7 @@ let myLastAnswer = -1;
 let questions = [];
 let correctAnswers = [];
 let unsubRoom = null;
+let revealedQs = new Set(); // questões já processadas (evita loop de pontuação)
 
 const COLORS = [
   ['#6c5ce7','#EEEDFE'],['#00b894','#E1F5EE'],['#fdcb6e','#2C2C2A'],
@@ -525,7 +526,10 @@ function listenRoom() {
         showQuestion(qIdx, room);
       }
     } else if (status === 'reveal') {
-      if (currentQ === qIdx) handleReveal(qIdx, room);
+      if (currentQ === qIdx && !revealedQs.has(qIdx)) {
+        revealedQs.add(qIdx);
+        handleReveal(qIdx, room);
+      }
     } else if (status === 'final') {
       handleFinal(room);
     }
@@ -699,7 +703,7 @@ async function handleFinal(room) {
 }
 
 function playAgain() {
-  myScore = 0; currentQ = -1; hasAnswered = false; myLastAnswer = -1;
+  myScore = 0; currentQ = -1; hasAnswered = false; myLastAnswer = -1; revealedQs.clear();
   document.getElementById('score-display').style.display = 'none';
   showScreen('screen-join');
 }
