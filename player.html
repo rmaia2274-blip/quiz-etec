@@ -8,129 +8,44 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1c1c27;
-    --border: rgba(255,255,255,0.08);
-    --accent: #6c5ce7;
-    --accent2: #a29bfe;
-    --green: #00b894;
-    --red: #d63031;
-    --amber: #fdcb6e;
-    --text: #f0f0f8;
-    --muted: #8888aa;
-    --radius: 12px;
+    --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c27;
+    --border: rgba(255,255,255,0.08); --accent: #6c5ce7; --accent2: #a29bfe;
+    --green: #00b894; --red: #d63031; --amber: #fdcb6e;
+    --text: #f0f0f8; --muted: #8888aa; --radius: 12px;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    font-size: 15px;
-    display: flex;
-    flex-direction: column;
-  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; font-size: 15px; display: flex; flex-direction: column; }
   h1,h2,h3 { font-family: 'Syne', sans-serif; }
-
-  .app {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 20px 16px;
-    width: 100%;
-  }
-
+  .app { flex: 1; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; padding: 20px 16px; width: 100%; }
   .screen { display: none; flex-direction: column; flex: 1; }
   .screen.active { display: flex; }
-
-  .topbar {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 24px; flex-shrink: 0;
-  }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-shrink: 0; }
   .topbar-left { display: flex; flex-direction: column; gap: 2px; }
   .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
   .logo span { color: var(--accent2); }
   .by-author { font-size: 10px; color: var(--muted); letter-spacing: 0.3px; }
-  .score-pill {
-    background: rgba(108,92,231,0.18); color: var(--accent2);
-    border: 1px solid rgba(108,92,231,0.3);
-    padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
-    font-family: 'Syne', sans-serif;
-  }
-
-  /* rank pill — exibida durante o quiz */
-  .rank-pill {
-    background: rgba(253,203,110,0.12); color: var(--amber);
-    border: 1px solid rgba(253,203,110,0.3);
-    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
-    font-family: 'Syne', sans-serif; display: none;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 12px;
-    flex-shrink: 0;
-  }
-
+  .score-pill { background: rgba(108,92,231,0.18); color: var(--accent2); border: 1px solid rgba(108,92,231,0.3); padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; font-family: 'Syne', sans-serif; }
+  .rank-pill { background: rgba(253,203,110,0.12); color: var(--amber); border: 1px solid rgba(253,203,110,0.3); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; font-family: 'Syne', sans-serif; display: none; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 12px; flex-shrink: 0; }
   label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
-  input[type=text] {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif;
-    font-size: 15px; padding: 12px 14px; outline: none; transition: border-color 0.2s;
-    text-align: center; letter-spacing: 2px;
-  }
+  input[type=text] { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; padding: 12px 14px; outline: none; transition: border-color 0.2s; text-align: center; letter-spacing: 2px; }
   input[type=text]:focus { border-color: var(--accent); }
-
-  .btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    border: none; border-radius: 8px; padding: 14px 20px;
-    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
-    cursor: pointer; transition: all 0.15s; width: 100%;
-  }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 8px; padding: 14px 20px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.15s; width: 100%; }
   .btn-primary { background: var(--accent); color: #fff; }
   .btn-primary:hover { background: #7c6cf0; }
   .btn-primary:disabled { background: var(--surface2); color: var(--muted); cursor: not-allowed; }
   .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-
   .join-hero { text-align: center; padding: 32px 0 24px; }
   .join-hero .title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
   .join-hero .sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
-  .room-code-input {
-    font-family: 'Syne', sans-serif !important;
-    font-size: 32px !important;
-    font-weight: 800 !important;
-    letter-spacing: 12px !important;
-  }
-
-  .lobby-center {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; text-align: center; gap: 16px;
-  }
-  .lobby-avatar {
-    width: 72px; height: 72px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800;
-    margin: 0 auto;
-  }
-  .waiting-dots span {
-    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-    background: var(--accent2); margin: 0 3px;
-    animation: bounce 1.2s infinite;
-  }
+  .room-code-input { font-family: 'Syne', sans-serif !important; font-size: 32px !important; font-weight: 800 !important; letter-spacing: 12px !important; }
+  .lobby-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 16px; }
+  .lobby-avatar { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin: 0 auto; }
+  .waiting-dots span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); margin: 0 3px; animation: bounce 1.2s infinite; }
   .waiting-dots span:nth-child(2) { animation-delay: 0.2s; }
   .waiting-dots span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes bounce {
-    0%,80%,100% { transform: translateY(0); opacity: 0.4; }
-    40% { transform: translateY(-8px); opacity: 1; }
-  }
-
+  @keyframes bounce { 0%,80%,100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-8px); opacity: 1; } }
   .q-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-shrink: 0; }
   .q-num { font-size: 12px; color: var(--muted); }
   .timer-ring-wrap { display: flex; justify-content: center; margin-bottom: 12px; flex-shrink: 0; }
@@ -140,36 +55,19 @@
   .timer-ring .bg { stroke: var(--surface2); }
   .timer-ring .fg { stroke: var(--accent); stroke-dasharray: 188; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear, stroke 0.5s; stroke-linecap: round; }
   .timer-ring .fg.urgent { stroke: var(--red); }
-  .timer-num {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px;
-  }
-
-  .question-text {
-    font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700;
-    line-height: 1.5; margin-bottom: 16px; flex-shrink: 0;
-  }
-
-  .options-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    flex: 1;
-  }
-  .opt-btn {
-    display: flex; flex-direction: column; align-items: flex-start;
-    padding: 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s;
-    border: 2px solid transparent; min-height: 80px; position: relative;
-    font-family: 'DM Sans', sans-serif; text-align: left;
-  }
-  .opt-btn .opt-letter {
-    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 4px;
-  }
+  .timer-num { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; }
+  .question-text { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; line-height: 1.5; margin-bottom: 10px; flex-shrink: 0; }
+  /* SVG container player */
+  .q-svg-wrap { margin-bottom: 12px; text-align: center; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 10px; overflow: hidden; flex-shrink: 0; }
+  .q-svg-wrap svg { max-width: 100%; height: auto; }
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 1; }
+  .opt-btn { display: flex; flex-direction: column; align-items: flex-start; padding: 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s; border: 2px solid transparent; min-height: 80px; position: relative; font-family: 'DM Sans', sans-serif; text-align: left; }
+  .opt-btn .opt-letter { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 4px; }
   .opt-btn .opt-text { font-size: 12px; line-height: 1.4; }
-
   .opt-btn.a { background: rgba(162,155,254,0.15); border-color: rgba(162,155,254,0.35); color: var(--accent2); }
   .opt-btn.b { background: rgba(0,184,148,0.12); border-color: rgba(0,184,148,0.3); color: var(--green); }
   .opt-btn.c { background: rgba(253,203,110,0.12); border-color: rgba(253,203,110,0.3); color: var(--amber); }
   .opt-btn.d { background: rgba(214,48,49,0.12); border-color: rgba(214,48,49,0.3); color: var(--red); }
-
   .opt-btn:hover { transform: scale(1.03); filter: brightness(1.15); }
   .opt-btn:active { transform: scale(0.97); }
   .opt-btn:disabled { cursor: default; transform: none; filter: none; }
@@ -177,28 +75,12 @@
   .opt-btn.correct { background: rgba(0,184,148,0.25) !important; border-color: var(--green) !important; color: #55efc4 !important; }
   .opt-btn.wrong { background: rgba(214,48,49,0.2) !important; border-color: var(--red) !important; color: #ff7675 !important; opacity: 0.7; }
   .opt-btn.dimmed { opacity: 0.3; }
-
-  .answered-card {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; text-align: center;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 24px; gap: 12px;
-  }
+  .answered-card { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; gap: 12px; }
   .answered-icon { font-size: 48px; }
   .answered-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
   .answered-sub { font-size: 13px; color: var(--muted); }
-  .pts-gained { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--accent2); }
-
-  /* colocação exibida na tela de aguardo */
-  .rank-display {
-    background: rgba(108,92,231,0.12); border: 1px solid rgba(108,92,231,0.3);
-    border-radius: 8px; padding: 10px 18px;
-    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent2);
-  }
-
-  .reveal-card {
-    padding: 16px; border-radius: 10px; margin-bottom: 10px; flex-shrink: 0;
-  }
+  .rank-display { background: rgba(108,92,231,0.12); border: 1px solid rgba(108,92,231,0.3); border-radius: 8px; padding: 10px 18px; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent2); }
+  .reveal-card { padding: 16px; border-radius: 10px; margin-bottom: 10px; flex-shrink: 0; }
   .reveal-card.correct { background: rgba(0,184,148,0.15); border: 1px solid rgba(0,184,148,0.4); }
   .reveal-card.wrong { background: rgba(214,48,49,0.12); border: 1px solid rgba(214,48,49,0.35); }
   .reveal-result { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 6px; }
@@ -206,38 +88,20 @@
   .reveal-result.wrong { color: var(--red); }
   .reveal-explanation { font-size: 13px; color: var(--text); line-height: 1.6; }
   .waiting-reveal { flex: 1; display: flex; align-items: center; justify-content: center; }
-
-  .podium-wrap { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-  .my-rank-card {
-    background: linear-gradient(135deg, rgba(108,92,231,0.25), rgba(162,155,254,0.1));
-    border: 1px solid rgba(108,92,231,0.4); border-radius: var(--radius); padding: 20px;
-    text-align: center;
-  }
+  .my-rank-card { background: linear-gradient(135deg, rgba(108,92,231,0.25), rgba(162,155,254,0.1)); border: 1px solid rgba(108,92,231,0.4); border-radius: var(--radius); padding: 20px; text-align: center; }
   .my-rank-card .rank-num { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--accent2); }
   .my-rank-card .rank-score { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; color: var(--text); }
   .my-rank-card .rank-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
-
-  .score-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 14px; border-radius: 8px;
-    background: var(--surface2); border: 1px solid var(--border);
-  }
+  .score-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); }
   .score-row.me { border-color: rgba(108,92,231,0.5); background: rgba(108,92,231,0.1); }
   .score-pts { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--accent2); }
-
-  .spinner {
-    width: 32px; height: 32px; border: 3px solid var(--border);
-    border-top-color: var(--accent); border-radius: 50%;
-    animation: spin 0.8s linear infinite; margin: 0 auto 12px;
-  }
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading { text-align: center; padding: 32px; color: var(--muted); font-size: 14px; }
   .error-msg { color: var(--red); font-size: 13px; margin-top: 8px; text-align: center; display: none; }
   .tag { display: inline-block; font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 500; }
   .tag-green { background: rgba(0,184,148,0.15); color: var(--green); border: 1px solid rgba(0,184,148,0.3); }
-  .mt12 { margin-top: 12px; }
-  .mt16 { margin-top: 16px; }
-  .flex-center { display: flex; align-items: center; justify-content: center; }
+  .mt12 { margin-top: 12px; } .mt16 { margin-top: 16px; }
   .q-progress { display: flex; gap: 4px; margin-bottom: 10px; flex-shrink: 0; }
   .q-dot { height: 4px; border-radius: 2px; background: var(--surface2); flex: 1; }
   .q-dot.done { background: var(--green); }
@@ -246,7 +110,6 @@
 </head>
 <body>
 <div class="app">
-
   <div class="topbar" id="topbar">
     <div class="topbar-left">
       <div class="logo">Quiz<span>Flow</span></div>
@@ -258,7 +121,7 @@
     </div>
   </div>
 
-  <!-- SCREEN: JOIN -->
+  <!-- JOIN -->
   <div id="screen-join" class="screen active">
     <div class="join-hero">
       <div class="title">Entre na sala</div>
@@ -266,8 +129,7 @@
     </div>
     <div class="card">
       <label>Código da sala</label>
-      <input type="text" id="inp-code" class="room-code-input" placeholder="0000" maxlength="4"
-        oninput="this.value=this.value.replace(/\D/g,'')">
+      <input type="text" id="inp-code" class="room-code-input" placeholder="0000" maxlength="4" oninput="this.value=this.value.replace(/\D/g,'')">
     </div>
     <div class="card">
       <label>Seu nome</label>
@@ -277,7 +139,7 @@
     <p class="error-msg" id="join-error"></p>
   </div>
 
-  <!-- SCREEN: LOBBY -->
+  <!-- LOBBY -->
   <div id="screen-lobby" class="screen">
     <div class="lobby-center">
       <div class="lobby-avatar" id="lobby-avatar"></div>
@@ -291,7 +153,7 @@
     </div>
   </div>
 
-  <!-- SCREEN: QUESTÃO -->
+  <!-- QUESTÃO -->
   <div id="screen-question" class="screen">
     <div class="q-progress" id="q-progress"></div>
     <div class="q-header">
@@ -308,22 +170,22 @@
       </div>
     </div>
     <div class="question-text" id="q-text"></div>
+    <div id="q-svg-player"></div>
     <div class="options-grid" id="q-options"></div>
   </div>
 
-  <!-- SCREEN: AGUARDANDO REVELAÇÃO -->
+  <!-- AGUARDANDO REVELAÇÃO -->
   <div id="screen-answered" class="screen">
     <div class="answered-card" id="answered-card">
       <div class="answered-icon" id="ans-icon">⏳</div>
       <div class="answered-title" id="ans-title">Resposta enviada!</div>
-      <div class="pts-gained" id="ans-pts" style="display:none"></div>
       <div class="answered-sub" id="ans-sub">Aguardando o professor revelar...</div>
       <div class="waiting-dots"><span></span><span></span><span></span></div>
       <div class="rank-display" id="ans-rank" style="display:none"></div>
     </div>
   </div>
 
-  <!-- SCREEN: REVELAÇÃO -->
+  <!-- REVELAÇÃO -->
   <div id="screen-reveal" class="screen">
     <div id="reveal-result-card" class="reveal-card">
       <div class="reveal-result" id="rev-result-txt"></div>
@@ -342,7 +204,7 @@
     </div>
   </div>
 
-  <!-- SCREEN: FINAL -->
+  <!-- FINAL -->
   <div id="screen-final" class="screen">
     <div style="text-align:center;padding:16px 0;flex-shrink:0">
       <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800">Quiz finalizado!</div>
@@ -360,16 +222,12 @@
     <button class="btn btn-secondary mt12" id="btn-again">Jogar novamente</button>
   </div>
 
-  <!-- SCREEN: LOADING -->
+  <!-- LOADING -->
   <div id="screen-loading" class="screen">
     <div style="flex:1;display:flex;align-items:center;justify-content:center">
-      <div class="loading">
-        <div class="spinner"></div>
-        <div id="loading-msg">Conectando...</div>
-      </div>
+      <div class="loading"><div class="spinner"></div><div id="loading-msg">Conectando...</div></div>
     </div>
   </div>
-
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -385,16 +243,13 @@ const FIREBASE_CONFIG = {
   appId: "1:224772621669:web:fd4bcc8186b1fe8fbecd8c"
 };
 
-function initializeApp(cfg, name) {
-  try { return firebase.app(name); } catch(e) { return firebase.initializeApp(cfg, name); }
-}
+function initializeApp(cfg, name) { try { return firebase.app(name); } catch(e) { return firebase.initializeApp(cfg, name); } }
 function getDatabase(app) { return firebase.database(app); }
 function ref(db, path) { return db.ref(path); }
 function set(r, val) { return r.set(val); }
 function get(r) { return r.once('value'); }
 function update(r, val) { return r.update(val); }
 function onValue(r, cb) { r.on('value', snap => cb(snap)); }
-function serverTimestamp() { return firebase.database.ServerValue.TIMESTAMP; }
 
 let db, roomRef, playerRef;
 let playerName = '', playerId = '', roomCode = '';
@@ -406,8 +261,6 @@ let timeLeft = 20;
 let hasAnswered = false;
 let myLastAnswer = -1;
 let questions = [];
-let correctAnswers = [];
-let unsubRoom = null;
 let revealedQs = new Set();
 
 const COLORS = [
@@ -419,25 +272,46 @@ function avatarColor(name) {
   return COLORS[h % COLORS.length];
 }
 
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function showError(id, msg) { const el = document.getElementById(id); el.style.display='block'; el.textContent=msg; setTimeout(()=>el.style.display='none',4000); }
+
+// ── SVG render helper ──────────────────────────────
+function renderSVG(containerId, svgString) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (svgString && typeof svgString === 'string' && svgString.trim().startsWith('<svg')) {
+    el.innerHTML = '<div class="q-svg-wrap">' + svgString + '</div>';
+  } else {
+    el.innerHTML = '';
+  }
 }
-function showError(id, msg) {
-  const el = document.getElementById(id);
-  el.style.display = 'block'; el.textContent = msg;
-  setTimeout(() => el.style.display='none', 4000);
+
+// ── Rank helpers ───────────────────────────────────
+async function getMyRank() {
+  try {
+    const snap = await get(ref(db, 'rooms/' + roomCode + '/players'));
+    const players = Object.values(snap.val() || {});
+    const sorted = players.sort((a,b) => (b.score||0)-(a.score||0));
+    const pos = sorted.findIndex(p => p.name === playerName) + 1;
+    return { pos, total: sorted.length };
+  } catch(e) { return null; }
+}
+function formatRank(pos, total) {
+  if (pos === 1) return '🥇 1º de ' + total;
+  if (pos === 2) return '🥈 2º de ' + total;
+  if (pos === 3) return '🥉 3º de ' + total;
+  return pos + 'º de ' + total;
+}
+function updateRankPill(pos, total) {
+  const pill = document.getElementById('rank-display');
+  if (!pill) return;
+  pill.style.display = 'block';
+  pill.textContent = formatRank(pos, total);
 }
 
 function initFirebase() {
-  try {
-    const app = initializeApp(FIREBASE_CONFIG, 'player');
-    db = getDatabase(app);
-    return true;
-  } catch(e) {
-    console.error('Erro Firebase:', e);
-    return false;
-  }
+  try { const app = initializeApp(FIREBASE_CONFIG, 'player'); db = getDatabase(app); return true; }
+  catch(e) { console.error('Erro Firebase:', e); return false; }
 }
 
 function prefillRoomCode() {
@@ -463,25 +337,25 @@ async function joinRoom() {
   if (!db && !initFirebase()) { showError('join-error', 'Erro ao conectar ao Firebase.'); return; }
 
   showScreen('screen-loading');
-  document.getElementById('loading-msg').textContent = 'Entrando na sala '+roomCode+'...';
+  document.getElementById('loading-msg').textContent = 'Entrando na sala ' + roomCode + '...';
 
   try {
-    const snap = await get(ref(db, 'rooms/'+roomCode));
+    const snap = await get(ref(db, 'rooms/' + roomCode));
     if (!snap.exists()) { showError('join-error', 'Sala não encontrada.'); showScreen('screen-join'); return; }
     const room = snap.val();
     if (room.status !== 'lobby') { showError('join-error', 'O quiz já começou.'); showScreen('screen-join'); return; }
 
-    playerId = 'p_'+ Date.now() + '_' + Math.random().toString(36).slice(2,6);
-    roomRef = ref(db, 'rooms/'+roomCode);
-    playerRef = ref(db, 'rooms/'+roomCode+'/players/'+playerId);
-    questions = Object.values(room.questions||{});
+    playerId = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    roomRef = ref(db, 'rooms/' + roomCode);
+    playerRef = ref(db, 'rooms/' + roomCode + '/players/' + playerId);
+    questions = Object.values(room.questions || {});
     totalTime = room.config?.tempo || 20;
 
     await set(playerRef, { name: playerName, score: 0, joinedAt: Date.now() });
     setupLobby(room);
     listenRoom();
   } catch(e) {
-    showError('join-error', 'Erro: '+e.message);
+    showError('join-error', 'Erro: ' + e.message);
     showScreen('screen-join');
   }
 }
@@ -505,12 +379,9 @@ function listenRoom() {
     const room = snap.val();
     const status = room.status;
     const qIdx = room.currentQ ?? -1;
-
     if (status === 'playing') {
       if (qIdx !== currentQ) {
-        currentQ = qIdx;
-        hasAnswered = false;
-        myLastAnswer = -1;
+        currentQ = qIdx; hasAnswered = false; myLastAnswer = -1;
         showQuestion(qIdx, room);
       }
     } else if (status === 'reveal') {
@@ -524,32 +395,6 @@ function listenRoom() {
   });
 }
 
-// ── calcula colocação do aluno em tempo real ────────
-async function getMyRank() {
-  try {
-    const snap = await get(ref(db, 'rooms/'+roomCode+'/players'));
-    const players = Object.values(snap.val()||{});
-    const sorted = players.sort((a,b) => (b.score||0)-(a.score||0));
-    const pos = sorted.findIndex(p => p.name === playerName) + 1;
-    const total = sorted.length;
-    return { pos, total };
-  } catch(e) { return null; }
-}
-
-function formatRank(pos, total) {
-  if (pos === 1) return '🥇 1º de '+total;
-  if (pos === 2) return '🥈 2º de '+total;
-  if (pos === 3) return '🥉 3º de '+total;
-  return pos+'º de '+total;
-}
-
-function updateRankPill(pos, total) {
-  const pill = document.getElementById('rank-display');
-  if (!pill) return;
-  pill.style.display = 'block';
-  pill.textContent = formatRank(pos, total);
-}
-
 function showQuestion(idx, room) {
   clearInterval(timerInterval);
   timeLeft = totalTime;
@@ -558,13 +403,17 @@ function showQuestion(idx, room) {
 
   const prog = document.getElementById('q-progress');
   prog.innerHTML = questions.map((_,i) =>
-    `<div class="q-dot ${i<idx?'done':i===idx?'active':''}"></div>`).join('');
+    `<div class="q-dot ${i<idx?'done':i===idx?'active':''}"></div>`
+  ).join('');
 
-  document.getElementById('q-num-lbl').textContent = 'Questão '+(idx+1)+' de '+questions.length;
+  document.getElementById('q-num-lbl').textContent = 'Questão ' + (idx+1) + ' de ' + questions.length;
   document.getElementById('q-topic-lbl').textContent = room.config?.tema || 'Matemática';
   document.getElementById('q-text').textContent = q.enunciado;
   document.getElementById('score-display').style.display = 'block';
-  document.getElementById('score-display').textContent = myScore+' pts';
+  document.getElementById('score-display').textContent = myScore + ' pts';
+
+  // renderiza SVG se existir
+  renderSVG('q-svg-player', q.svg);
 
   const LETTERS = ['A','B','C','D'];
   const CLASSES = ['a','b','c','d'];
@@ -584,28 +433,22 @@ window.selectAnswer = function(answerIdx, qIdx) {
   hasAnswered = true;
   myLastAnswer = answerIdx;
   clearInterval(timerInterval);
-
-  set(ref(db, 'rooms/'+roomCode+'/answers/q'+qIdx+'/'+playerId), {
+  set(ref(db, 'rooms/' + roomCode + '/answers/q' + qIdx + '/' + playerId), {
     answer: answerIdx, timeLeft: timeLeft, name: playerName
   });
-
   document.querySelectorAll('.opt-btn').forEach((b,i) => {
     b.disabled = true;
     if (i !== answerIdx) b.classList.add('dimmed');
     else b.classList.add('selected');
   });
-
-  setTimeout(() => { showAnswered(answerIdx); }, 400);
+  setTimeout(() => showAnswered(answerIdx), 400);
 }
 
 async function showAnswered(answerIdx) {
   const LETTERS = ['A','B','C','D'];
   document.getElementById('ans-icon').textContent = '✓';
-  document.getElementById('ans-title').textContent = 'Resposta '+LETTERS[answerIdx]+' enviada!';
-  document.getElementById('ans-pts').style.display = 'none';
+  document.getElementById('ans-title').textContent = 'Resposta ' + LETTERS[answerIdx] + ' enviada!';
   document.getElementById('ans-sub').textContent = 'Aguardando o professor revelar...';
-
-  // busca colocação atual
   const rankEl = document.getElementById('ans-rank');
   const rankData = await getMyRank();
   if (rankData && rankData.total > 1) {
@@ -613,7 +456,6 @@ async function showAnswered(answerIdx) {
     rankEl.textContent = 'Sua posição atual: ' + formatRank(rankData.pos, rankData.total);
     updateRankPill(rankData.pos, rankData.total);
   }
-
   showScreen('screen-answered');
 }
 
@@ -626,9 +468,7 @@ function startTimer(idx) {
       clearInterval(timerInterval);
       if (!hasAnswered) {
         hasAnswered = true;
-        set(ref(db, 'rooms/'+roomCode+'/answers/q'+idx+'/'+playerId), {
-          answer: -1, timeLeft: 0, name: playerName
-        });
+        set(ref(db, 'rooms/' + roomCode + '/answers/q' + idx + '/' + playerId), { answer: -1, timeLeft: 0, name: playerName });
         document.getElementById('ans-icon').textContent = '⏱';
         document.getElementById('ans-title').textContent = 'Tempo esgotado!';
         document.getElementById('ans-sub').textContent = 'Aguardando revelação...';
@@ -641,8 +481,7 @@ function startTimer(idx) {
 
 function updateTimerUI(t, total) {
   const circumference = 188;
-  const pct = t / total;
-  const offset = circumference * (1 - pct);
+  const offset = circumference * (1 - t / total);
   const circle = document.getElementById('timer-circle');
   const num = document.getElementById('timer-num');
   if (!circle) return;
@@ -659,7 +498,6 @@ async function handleReveal(idx, room) {
   const isCorrect = myLastAnswer === correct;
   const didAnswer = myLastAnswer >= 0;
   const LETTERS = ['A','B','C','D'];
-
   const card = document.getElementById('reveal-result-card');
   const resultTxt = document.getElementById('rev-result-txt');
   const explanation = document.getElementById('rev-explanation');
@@ -681,36 +519,31 @@ async function handleReveal(idx, room) {
   }
 
   explanation.textContent = q.explicacao;
-  document.getElementById('rev-score').textContent = myScore.toLocaleString()+' pts';
-  document.getElementById('score-display').textContent = myScore+' pts';
-
+  document.getElementById('rev-score').textContent = myScore.toLocaleString() + ' pts';
+  document.getElementById('score-display').textContent = myScore + ' pts';
   if (playerRef) update(playerRef, { score: myScore });
 
-  // busca colocação atualizada após pontuação
   const rankData = await getMyRank();
   const revRankTxt = document.getElementById('rev-rank-txt');
   if (rankData && rankData.total > 1) {
     revRankTxt.textContent = 'Posição: ' + formatRank(rankData.pos, rankData.total);
     updateRankPill(rankData.pos, rankData.total);
   }
-
   showScreen('screen-reveal');
 }
 
 async function handleFinal(room) {
   clearInterval(timerInterval);
-  const snap = await get(ref(db, 'rooms/'+roomCode+'/players'));
-  const players = Object.values(snap.val()||{});
+  const snap = await get(ref(db, 'rooms/' + roomCode + '/players'));
+  const players = Object.values(snap.val() || {});
   const sorted = players.sort((a,b) => (b.score||0)-(a.score||0));
   const myPos = sorted.findIndex(p => p.name === playerName) + 1;
 
   document.getElementById('final-name-lbl').textContent = playerName;
-  document.getElementById('final-pos').textContent =
-    myPos === 1 ? '🥇' : myPos === 2 ? '🥈' : myPos === 3 ? '🥉' : '#'+myPos;
+  document.getElementById('final-pos').textContent = myPos === 1 ? '🥇' : myPos === 2 ? '🥈' : myPos === 3 ? '🥉' : '#' + myPos;
   document.getElementById('final-score').textContent = myScore.toLocaleString();
-  document.getElementById('final-acertos').textContent = 'sala: '+sorted.length+' jogadores';
+  document.getElementById('final-acertos').textContent = 'sala: ' + sorted.length + ' jogadores';
 
-  // oculta rank pill no final
   const pill = document.getElementById('rank-display');
   if (pill) pill.style.display = 'none';
 
@@ -724,7 +557,6 @@ async function handleFinal(room) {
       <span class="score-pts">${(p.score||0).toLocaleString()}</span>
     </div>`
   ).join('');
-
   showScreen('screen-final');
 }
 
