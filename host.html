@@ -583,9 +583,20 @@ Responda APENAS com JSON válido, sem texto antes ou depois:
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
     const data = await res.json();
-    const txt = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').replace(/```json|```/g,'').trim();
+    // verificar erro da API Gemini
+    if (data.error) throw new Error('Gemini: ' + data.error.message);
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log('Gemini raw:', raw); // debug
+    // limpar markdown e extrair JSON
+    let txt = raw.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
+    // se vier texto antes do {, extrair só o JSON
+    const jsonStart = txt.indexOf('{');
+    const jsonEnd = txt.lastIndexOf('}');
+    if (jsonStart === -1 || jsonEnd === -1) throw new Error('JSON não encontrado na resposta do Gemini');
+    txt = txt.slice(jsonStart, jsonEnd + 1);
     const parsed = JSON.parse(txt);
     questions = parsed.questoes;
+    if (!questions || questions.length === 0) throw new Error('Nenhuma questão gerada');
     await createRoom();
   } catch(e) {
     showScreen('screen-generating');
