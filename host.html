@@ -248,8 +248,13 @@
     </div>
     <div class="card">
       <div class="card-title">Credenciais do Firebase</div>
+      <div style="margin-bottom:16px;padding:14px;background:rgba(253,203,110,0.08);border:1px solid rgba(253,203,110,0.3);border-radius:8px">
+        <label style="color:var(--amber);margin-bottom:6px">Chave de API Anthropic</label>
+        <input type="text" id="anthropic-key" placeholder="sk-ant-..." style="font-family:monospace">
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Obtenha em <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--amber)">console.anthropic.com/settings/keys</a></div>
+      </div>
       <div class="firebase-fields">
-        <div><label>API Key</label><input type="text" id="fb-apiKey" placeholder="AIzaSy..."></div>
+        <div><label>API Key Firebase</label><input type="text" id="fb-apiKey" placeholder="AIzaSy..."></div>
         <div><label>Auth Domain</label><input type="text" id="fb-authDomain" placeholder="projeto.firebaseapp.com"></div>
         <div><label>Database URL</label><input type="text" id="fb-databaseURL" placeholder="https://projeto-default-rtdb.firebaseio.com"></div>
         <div><label>Project ID</label><input type="text" id="fb-projectId" placeholder="meu-projeto"></div>
@@ -502,6 +507,10 @@ function showScreen(id) {
 }
 
 window.saveConfig = async function() {
+  const anthropicKey = document.getElementById('anthropic-key').value.trim();
+  if (!anthropicKey || !anthropicKey.startsWith('sk-ant-')) {
+    showError('config-error', 'Chave Anthropic inválida. Deve começar com sk-ant-'); return;
+  }
   const fields = ['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId'];
   const cfg = {};
   for (const f of fields) {
@@ -511,6 +520,7 @@ window.saveConfig = async function() {
     }
     cfg[f] = v;
   }
+  localStorage.setItem('anthropicKey', anthropicKey);
   try {
     const app = initializeApp(cfg, 'main');
     db = getDatabase(app);
@@ -566,9 +576,15 @@ Responda APENAS com JSON válido, sem texto antes ou depois:
 "correta" é o índice 0-3 da alternativa correta.`;
 
   try {
+    const anthropicKey = localStorage.getItem('anthropicKey') || '';
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-ipc': 'true'
+      },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
     });
     const data = await res.json();
@@ -825,6 +841,9 @@ window.resetConfig = function() {
 
 // ── init ───────────────────────────────────────────
 function initApp() {
+  // pre-popular campos se houver config salva
+  const savedKey = localStorage.getItem('anthropicKey');
+  if (savedKey) { const el = document.getElementById('anthropic-key'); if(el) el.value = savedKey; }
   const saved = loadConfig();
   if (!saved) { showScreen('screen-config'); return; }
   // valida campos obrigatórios antes de inicializar
