@@ -267,7 +267,7 @@
       <label>Seu nome</label>
       <input type="text" id="inp-name" placeholder="Ex: João Silva" maxlength="24" style="text-align:left;letter-spacing:normal;font-size:15px">
     </div>
-    <button class="btn btn-primary mt12" onclick="joinRoom()">Entrar na sala</button>
+    <button class="btn btn-primary mt12" id="btn-join">Entrar na sala</button>
     <p class="error-msg" id="join-error"></p>
   </div>
 
@@ -359,7 +359,7 @@
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:0.5px;text-transform:uppercase">Placar geral</div>
       <div id="final-scoreboard"></div>
     </div>
-    <button class="btn btn-secondary mt12" onclick="playAgain()">Jogar novamente</button>
+    <button class="btn btn-secondary mt12" id="btn-again">Jogar novamente</button>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -376,9 +376,31 @@
 
 </div><!-- .app -->
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, get, onValue, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+// === CREDENCIAIS FIREBASE EMBUTIDAS (mesmo projeto do host) ===
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB3MtnPxiO2chA7GHvFNBCQTSaQaoomhg8",
+  authDomain: "quiz-etec-4646f.firebaseapp.com",
+  databaseURL: "https://quiz-etec-4646f-default-rtdb.firebaseio.com",
+  projectId: "quiz-etec-4646f",
+  storageBucket: "quiz-etec-4646f.firebasestorage.app",
+  messagingSenderId: "224772621669",
+  appId: "1:224772621669:web:fd4bcc8186b1fe8fbecd8c"
+};
+
+// aliases compat Firebase
+function initializeApp(cfg, name) {
+  try { return firebase.app(name); } catch(e) { return firebase.initializeApp(cfg, name); }
+}
+function getDatabase(app) { return firebase.database(app); }
+function ref(db, path) { return db.ref(path); }
+function set(r, val) { return r.set(val); }
+function get(r) { return r.once('value'); }
+function update(r, val) { return r.update(val); }
+function onValue(r, cb) { r.on('value', snap => cb(snap)); }
+function serverTimestamp() { return firebase.database.ServerValue.TIMESTAMP; }
 
 // ── state ──────────────────────────────────────────
 let db, roomRef, playerRef;
@@ -413,36 +435,42 @@ function showError(id, msg) {
   setTimeout(() => el.style.display='none', 4000);
 }
 
+// ── inicializa Firebase com config embutida ──────
+function initFirebase() {
+  try {
+    const app = initializeApp(FIREBASE_CONFIG, 'player');
+    db = getDatabase(app);
+    return true;
+  } catch(e) {
+    console.error('Erro Firebase:', e);
+    return false;
+  }
+}
+
 // ── pre-fill sala from URL ─────────────────────────
-(function prefill() {
+function prefillRoomCode() {
   const params = new URLSearchParams(window.location.search);
   const sala = params.get('sala');
-  if (sala) document.getElementById('inp-code').value = sala;
-  const saved = localStorage.getItem('fbConfig');
-  if (saved) {
-    try {
-      const cfg = JSON.parse(saved);
-      const app = initializeApp(cfg, 'player');
-      db = getDatabase(app);
-    } catch(e) {}
-  }
-})();
+  if (sala) { const el = document.getElementById('inp-code'); if(el) el.value = sala; }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  prefillRoomCode();
+  initFirebase();
+  // bind join button
+  const btnJoin = document.getElementById('btn-join');
+  if (btnJoin) btnJoin.addEventListener('click', joinRoom);
+  const btnAgain = document.getElementById('btn-again');
+  if (btnAgain) btnAgain.addEventListener('click', playAgain);
+});
 
 // ── join ───────────────────────────────────────────
-window.joinRoom = async function() {
+async function joinRoom() {
   roomCode = document.getElementById('inp-code').value.trim();
   playerName = document.getElementById('inp-name').value.trim();
   if (roomCode.length !== 4) { showError('join-error', 'Código deve ter 4 dígitos.'); return; }
   if (!playerName) { showError('join-error', 'Digite seu nome.'); return; }
-  if (!db) {
-    const saved = localStorage.getItem('fbConfig');
-    if (!saved) { showError('join-error', 'Firebase não configurado. Abra o host.html primeiro.'); return; }
-    try {
-      const cfg = JSON.parse(saved);
-      const app = initializeApp(cfg, 'player-'+Date.now());
-      db = getDatabase(app);
-    } catch(e) { showError('join-error', 'Erro Firebase: '+e.message); return; }
-  }
+  if (!db && !initFirebase()) { showError('join-error', 'Erro ao conectar ao Firebase.'); return; }
 
   showScreen('screen-loading');
   document.getElementById('loading-msg').textContent = 'Entrando na sala '+roomCode+'...';
@@ -670,7 +698,7 @@ async function handleFinal(room) {
   showScreen('screen-final');
 }
 
-window.playAgain = function() {
+function playAgain() {
   myScore = 0; currentQ = -1; hasAnswered = false; myLastAnswer = -1;
   document.getElementById('score-display').style.display = 'none';
   showScreen('screen-join');
