@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Quiz ETEC — Aluno</title>
+<title>QuizFlow — Aluno</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -47,13 +47,14 @@
   .screen { display: none; flex-direction: column; flex: 1; }
   .screen.active { display: flex; }
 
-  /* topbar */
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 24px; flex-shrink: 0;
   }
+  .topbar-left { display: flex; flex-direction: column; gap: 2px; }
   .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
   .logo span { color: var(--accent2); }
+  .by-author { font-size: 10px; color: var(--muted); letter-spacing: 0.3px; }
   .score-pill {
     background: rgba(108,92,231,0.18); color: var(--accent2);
     border: 1px solid rgba(108,92,231,0.3);
@@ -61,7 +62,14 @@
     font-family: 'Syne', sans-serif;
   }
 
-  /* card */
+  /* rank pill — exibida durante o quiz */
+  .rank-pill {
+    background: rgba(253,203,110,0.12); color: var(--amber);
+    border: 1px solid rgba(253,203,110,0.3);
+    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    font-family: 'Syne', sans-serif; display: none;
+  }
+
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -71,7 +79,6 @@
     flex-shrink: 0;
   }
 
-  /* forms */
   label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
   input[type=text] {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
@@ -81,7 +88,6 @@
   }
   input[type=text]:focus { border-color: var(--accent); }
 
-  /* buttons */
   .btn {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     border: none; border-radius: 8px; padding: 14px 20px;
@@ -93,10 +99,7 @@
   .btn-primary:disabled { background: var(--surface2); color: var(--muted); cursor: not-allowed; }
   .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
 
-  /* join screen */
-  .join-hero {
-    text-align: center; padding: 32px 0 24px;
-  }
+  .join-hero { text-align: center; padding: 32px 0 24px; }
   .join-hero .title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
   .join-hero .sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
   .room-code-input {
@@ -106,7 +109,6 @@
     letter-spacing: 12px !important;
   }
 
-  /* lobby */
   .lobby-center {
     flex: 1; display: flex; flex-direction: column;
     align-items: center; justify-content: center; text-align: center; gap: 16px;
@@ -129,7 +131,6 @@
     40% { transform: translateY(-8px); opacity: 1; }
   }
 
-  /* question */
   .q-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-shrink: 0; }
   .q-num { font-size: 12px; color: var(--muted); }
   .timer-ring-wrap { display: flex; justify-content: center; margin-bottom: 12px; flex-shrink: 0; }
@@ -149,7 +150,6 @@
     line-height: 1.5; margin-bottom: 16px; flex-shrink: 0;
   }
 
-  /* answer buttons */
   .options-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
     flex: 1;
@@ -178,7 +178,6 @@
   .opt-btn.wrong { background: rgba(214,48,49,0.2) !important; border-color: var(--red) !important; color: #ff7675 !important; opacity: 0.7; }
   .opt-btn.dimmed { opacity: 0.3; }
 
-  /* answered state */
   .answered-card {
     flex: 1; display: flex; flex-direction: column;
     align-items: center; justify-content: center; text-align: center;
@@ -190,7 +189,13 @@
   .answered-sub { font-size: 13px; color: var(--muted); }
   .pts-gained { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--accent2); }
 
-  /* reveal */
+  /* colocação exibida na tela de aguardo */
+  .rank-display {
+    background: rgba(108,92,231,0.12); border: 1px solid rgba(108,92,231,0.3);
+    border-radius: 8px; padding: 10px 18px;
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent2);
+  }
+
   .reveal-card {
     padding: 16px; border-radius: 10px; margin-bottom: 10px; flex-shrink: 0;
   }
@@ -202,7 +207,6 @@
   .reveal-explanation { font-size: 13px; color: var(--text); line-height: 1.6; }
   .waiting-reveal { flex: 1; display: flex; align-items: center; justify-content: center; }
 
-  /* podium / final */
   .podium-wrap { flex: 1; display: flex; flex-direction: column; gap: 10px; }
   .my-rank-card {
     background: linear-gradient(135deg, rgba(108,92,231,0.25), rgba(162,155,254,0.1));
@@ -221,7 +225,6 @@
   .score-row.me { border-color: rgba(108,92,231,0.5); background: rgba(108,92,231,0.1); }
   .score-pts { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--accent2); }
 
-  /* misc */
   .spinner {
     width: 32px; height: 32px; border: 3px solid var(--border);
     border-top-color: var(--accent); border-radius: 50%;
@@ -244,15 +247,18 @@
 <body>
 <div class="app">
 
-  <!-- topbar (sempre visível) -->
   <div class="topbar" id="topbar">
-    <div class="logo">Quiz<span>ETEC</span></div>
-    <span class="score-pill" id="score-display" style="display:none">0 pts</span>
+    <div class="topbar-left">
+      <div class="logo">Quiz<span>Flow</span></div>
+      <span class="by-author">by Roberto Maia</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="rank-pill" id="rank-display"></span>
+      <span class="score-pill" id="score-display" style="display:none">0 pts</span>
+    </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: JOIN
-  ══════════════════════════════════════════ -->
+  <!-- SCREEN: JOIN -->
   <div id="screen-join" class="screen active">
     <div class="join-hero">
       <div class="title">Entre na sala</div>
@@ -271,9 +277,7 @@
     <p class="error-msg" id="join-error"></p>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: LOBBY (esperando começar)
-  ══════════════════════════════════════════ -->
+  <!-- SCREEN: LOBBY -->
   <div id="screen-lobby" class="screen">
     <div class="lobby-center">
       <div class="lobby-avatar" id="lobby-avatar"></div>
@@ -287,9 +291,7 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: QUESTÃO
-  ══════════════════════════════════════════ -->
+  <!-- SCREEN: QUESTÃO -->
   <div id="screen-question" class="screen">
     <div class="q-progress" id="q-progress"></div>
     <div class="q-header">
@@ -309,9 +311,7 @@
     <div class="options-grid" id="q-options"></div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: AGUARDANDO REVELAÇÃO
-  ══════════════════════════════════════════ -->
+  <!-- SCREEN: AGUARDANDO REVELAÇÃO -->
   <div id="screen-answered" class="screen">
     <div class="answered-card" id="answered-card">
       <div class="answered-icon" id="ans-icon">⏳</div>
@@ -319,12 +319,11 @@
       <div class="pts-gained" id="ans-pts" style="display:none"></div>
       <div class="answered-sub" id="ans-sub">Aguardando o professor revelar...</div>
       <div class="waiting-dots"><span></span><span></span><span></span></div>
+      <div class="rank-display" id="ans-rank" style="display:none"></div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: REVELAÇÃO
-  ══════════════════════════════════════════ -->
+  <!-- SCREEN: REVELAÇÃO -->
   <div id="screen-reveal" class="screen">
     <div id="reveal-result-card" class="reveal-card">
       <div class="reveal-result" id="rev-result-txt"></div>
@@ -333,6 +332,7 @@
     <div class="card">
       <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Sua pontuação acumulada</div>
       <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--accent2)" id="rev-score"></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px" id="rev-rank-txt"></div>
     </div>
     <div class="waiting-reveal" id="rev-waiting">
       <div style="text-align:center;color:var(--muted);font-size:13px">
@@ -342,9 +342,7 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: FINAL
-  ══════════════════════════════════════════ -->
+  <!-- SCREEN: FINAL -->
   <div id="screen-final" class="screen">
     <div style="text-align:center;padding:16px 0;flex-shrink:0">
       <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800">Quiz finalizado!</div>
@@ -362,9 +360,7 @@
     <button class="btn btn-secondary mt12" id="btn-again">Jogar novamente</button>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: LOADING
-  ══════════════════════════════════════════ -->
+  <!-- SCREEN: LOADING -->
   <div id="screen-loading" class="screen">
     <div style="flex:1;display:flex;align-items:center;justify-content:center">
       <div class="loading">
@@ -374,12 +370,11 @@
     </div>
   </div>
 
-</div><!-- .app -->
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-// === CREDENCIAIS FIREBASE EMBUTIDAS (mesmo projeto do host) ===
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyB3MtnPxiO2chA7GHvFNBCQTSaQaoomhg8",
   authDomain: "quiz-etec-4646f.firebaseapp.com",
@@ -390,7 +385,6 @@ const FIREBASE_CONFIG = {
   appId: "1:224772621669:web:fd4bcc8186b1fe8fbecd8c"
 };
 
-// aliases compat Firebase
 function initializeApp(cfg, name) {
   try { return firebase.app(name); } catch(e) { return firebase.initializeApp(cfg, name); }
 }
@@ -402,7 +396,6 @@ function update(r, val) { return r.update(val); }
 function onValue(r, cb) { r.on('value', snap => cb(snap)); }
 function serverTimestamp() { return firebase.database.ServerValue.TIMESTAMP; }
 
-// ── state ──────────────────────────────────────────
 let db, roomRef, playerRef;
 let playerName = '', playerId = '', roomCode = '';
 let myScore = 0;
@@ -415,7 +408,7 @@ let myLastAnswer = -1;
 let questions = [];
 let correctAnswers = [];
 let unsubRoom = null;
-let revealedQs = new Set(); // questões já processadas (evita loop de pontuação)
+let revealedQs = new Set();
 
 const COLORS = [
   ['#6c5ce7','#EEEDFE'],['#00b894','#E1F5EE'],['#fdcb6e','#2C2C2A'],
@@ -436,7 +429,6 @@ function showError(id, msg) {
   setTimeout(() => el.style.display='none', 4000);
 }
 
-// ── inicializa Firebase com config embutida ──────
 function initFirebase() {
   try {
     const app = initializeApp(FIREBASE_CONFIG, 'player');
@@ -448,7 +440,6 @@ function initFirebase() {
   }
 }
 
-// ── pre-fill sala from URL ─────────────────────────
 function prefillRoomCode() {
   const params = new URLSearchParams(window.location.search);
   const sala = params.get('sala');
@@ -458,14 +449,12 @@ function prefillRoomCode() {
 document.addEventListener('DOMContentLoaded', () => {
   prefillRoomCode();
   initFirebase();
-  // bind join button
   const btnJoin = document.getElementById('btn-join');
   if (btnJoin) btnJoin.addEventListener('click', joinRoom);
   const btnAgain = document.getElementById('btn-again');
   if (btnAgain) btnAgain.addEventListener('click', playAgain);
 });
 
-// ── join ───────────────────────────────────────────
 async function joinRoom() {
   roomCode = document.getElementById('inp-code').value.trim();
   playerName = document.getElementById('inp-name').value.trim();
@@ -510,7 +499,6 @@ function setupLobby(room) {
   showScreen('screen-lobby');
 }
 
-// ── room listener ──────────────────────────────────
 function listenRoom() {
   onValue(roomRef, snap => {
     if (!snap.exists()) return;
@@ -536,14 +524,38 @@ function listenRoom() {
   });
 }
 
-// ── question ───────────────────────────────────────
+// ── calcula colocação do aluno em tempo real ────────
+async function getMyRank() {
+  try {
+    const snap = await get(ref(db, 'rooms/'+roomCode+'/players'));
+    const players = Object.values(snap.val()||{});
+    const sorted = players.sort((a,b) => (b.score||0)-(a.score||0));
+    const pos = sorted.findIndex(p => p.name === playerName) + 1;
+    const total = sorted.length;
+    return { pos, total };
+  } catch(e) { return null; }
+}
+
+function formatRank(pos, total) {
+  if (pos === 1) return '🥇 1º de '+total;
+  if (pos === 2) return '🥈 2º de '+total;
+  if (pos === 3) return '🥉 3º de '+total;
+  return pos+'º de '+total;
+}
+
+function updateRankPill(pos, total) {
+  const pill = document.getElementById('rank-display');
+  if (!pill) return;
+  pill.style.display = 'block';
+  pill.textContent = formatRank(pos, total);
+}
+
 function showQuestion(idx, room) {
   clearInterval(timerInterval);
   timeLeft = totalTime;
   const q = questions[idx];
   if (!q) return;
 
-  // progress dots
   const prog = document.getElementById('q-progress');
   prog.innerHTML = questions.map((_,i) =>
     `<div class="q-dot ${i<idx?'done':i===idx?'active':''}"></div>`).join('');
@@ -573,33 +585,38 @@ window.selectAnswer = function(answerIdx, qIdx) {
   myLastAnswer = answerIdx;
   clearInterval(timerInterval);
 
-  // salvar resposta com timeLeft para pontuação
   set(ref(db, 'rooms/'+roomCode+'/answers/q'+qIdx+'/'+playerId), {
     answer: answerIdx, timeLeft: timeLeft, name: playerName
   });
 
-  // UI feedback imediato
   document.querySelectorAll('.opt-btn').forEach((b,i) => {
     b.disabled = true;
     if (i !== answerIdx) b.classList.add('dimmed');
     else b.classList.add('selected');
   });
 
-  setTimeout(() => {
-    showAnswered(answerIdx);
-  }, 400);
+  setTimeout(() => { showAnswered(answerIdx); }, 400);
 }
 
-function showAnswered(answerIdx) {
+async function showAnswered(answerIdx) {
   const LETTERS = ['A','B','C','D'];
   document.getElementById('ans-icon').textContent = '✓';
   document.getElementById('ans-title').textContent = 'Resposta '+LETTERS[answerIdx]+' enviada!';
   document.getElementById('ans-pts').style.display = 'none';
   document.getElementById('ans-sub').textContent = 'Aguardando o professor revelar...';
+
+  // busca colocação atual
+  const rankEl = document.getElementById('ans-rank');
+  const rankData = await getMyRank();
+  if (rankData && rankData.total > 1) {
+    rankEl.style.display = 'block';
+    rankEl.textContent = 'Sua posição atual: ' + formatRank(rankData.pos, rankData.total);
+    updateRankPill(rankData.pos, rankData.total);
+  }
+
   showScreen('screen-answered');
 }
 
-// timer auto-submit
 function startTimer(idx) {
   updateTimerUI(totalTime, totalTime);
   timerInterval = setInterval(() => {
@@ -615,6 +632,7 @@ function startTimer(idx) {
         document.getElementById('ans-icon').textContent = '⏱';
         document.getElementById('ans-title').textContent = 'Tempo esgotado!';
         document.getElementById('ans-sub').textContent = 'Aguardando revelação...';
+        document.getElementById('ans-rank').style.display = 'none';
         showScreen('screen-answered');
       }
     }
@@ -634,8 +652,7 @@ function updateTimerUI(t, total) {
   num.style.color = t <= 5 ? 'var(--red)' : 'var(--text)';
 }
 
-// ── reveal ─────────────────────────────────────────
-function handleReveal(idx, room) {
+async function handleReveal(idx, room) {
   const q = questions[idx];
   if (!q) return;
   const correct = q.correta;
@@ -667,26 +684,35 @@ function handleReveal(idx, room) {
   document.getElementById('rev-score').textContent = myScore.toLocaleString()+' pts';
   document.getElementById('score-display').textContent = myScore+' pts';
 
-  // update score no Firebase
   if (playerRef) update(playerRef, { score: myScore });
+
+  // busca colocação atualizada após pontuação
+  const rankData = await getMyRank();
+  const revRankTxt = document.getElementById('rev-rank-txt');
+  if (rankData && rankData.total > 1) {
+    revRankTxt.textContent = 'Posição: ' + formatRank(rankData.pos, rankData.total);
+    updateRankPill(rankData.pos, rankData.total);
+  }
 
   showScreen('screen-reveal');
 }
 
-// ── final ──────────────────────────────────────────
 async function handleFinal(room) {
   clearInterval(timerInterval);
   const snap = await get(ref(db, 'rooms/'+roomCode+'/players'));
   const players = Object.values(snap.val()||{});
   const sorted = players.sort((a,b) => (b.score||0)-(a.score||0));
   const myPos = sorted.findIndex(p => p.name === playerName) + 1;
-  const acertos = correctAnswers.length;
 
   document.getElementById('final-name-lbl').textContent = playerName;
   document.getElementById('final-pos').textContent =
     myPos === 1 ? '🥇' : myPos === 2 ? '🥈' : myPos === 3 ? '🥉' : '#'+myPos;
   document.getElementById('final-score').textContent = myScore.toLocaleString();
   document.getElementById('final-acertos').textContent = 'sala: '+sorted.length+' jogadores';
+
+  // oculta rank pill no final
+  const pill = document.getElementById('rank-display');
+  if (pill) pill.style.display = 'none';
 
   const medals = ['🥇','🥈','🥉'];
   document.getElementById('final-scoreboard').innerHTML = sorted.slice(0,8).map((p,i) =>
@@ -705,6 +731,8 @@ async function handleFinal(room) {
 function playAgain() {
   myScore = 0; currentQ = -1; hasAnswered = false; myLastAnswer = -1; revealedQs.clear();
   document.getElementById('score-display').style.display = 'none';
+  const pill = document.getElementById('rank-display');
+  if (pill) pill.style.display = 'none';
   showScreen('screen-join');
 }
 </script>

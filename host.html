@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz ETEC — Painel do Professor</title>
+<title>QuizFlow — Painel do Professor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -31,25 +31,24 @@
   }
   h1,h2,h3,.display { font-family: 'Syne', sans-serif; }
 
-  /* ── layout ── */
   .app { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
   .screen { display: none; }
   .screen.active { display: block; }
 
-  /* ── topbar ── */
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 32px;
   }
   .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
   .logo span { color: var(--accent2); }
+  .topbar-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
   .badge-role {
     background: rgba(108,92,231,0.18); color: var(--accent2);
     border: 1px solid rgba(108,92,231,0.3);
     padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
   }
+  .by-author { font-size: 11px; color: var(--muted); letter-spacing: 0.3px; }
 
-  /* ── cards ── */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -59,7 +58,6 @@
   }
   .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
 
-  /* ── forms ── */
   label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
   input[type=text], input[type=number], select, textarea {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
@@ -73,7 +71,6 @@
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
-  /* ── chips ── */
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
   .chip {
     background: var(--surface2); border: 1px solid var(--border);
@@ -83,7 +80,6 @@
   .chip:hover { border-color: var(--accent); color: var(--accent2); }
   .chip.sel { background: rgba(108,92,231,0.2); border-color: var(--accent); color: var(--accent2); }
 
-  /* ── buttons ── */
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
     border: none; border-radius: 8px; padding: 11px 20px;
@@ -98,7 +94,6 @@
   .btn-danger { background: rgba(214,48,49,0.15); color: var(--red); border: 1px solid rgba(214,48,49,0.3); }
   .btn-success { background: rgba(0,184,148,0.15); color: var(--green); border: 1px solid rgba(0,184,148,0.3); }
 
-  /* ── config firebase ── */
   #config-notice {
     background: rgba(253,203,110,0.1); border: 1px solid rgba(253,203,110,0.3);
     border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px;
@@ -110,7 +105,6 @@
   }
   .firebase-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 
-  /* ── lobby ── */
   .room-code-display {
     text-align: center; padding: 24px;
     background: linear-gradient(135deg, rgba(108,92,231,0.15), rgba(162,155,254,0.08));
@@ -136,7 +130,6 @@
   }
   @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-  /* ── questão ao vivo ── */
   .live-question-text {
     font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700;
     line-height: 1.4; margin-bottom: 20px; color: var(--text);
@@ -151,7 +144,6 @@
   .answer-card.c { background: rgba(253,203,110,0.12); border-color: rgba(253,203,110,0.35); color: var(--amber); }
   .answer-card.d { background: rgba(214,48,49,0.12); border-color: rgba(214,48,49,0.35); color: var(--red); }
 
-  /* ── timer ── */
   .timer-wrap { text-align: center; margin-bottom: 20px; }
   .timer-big {
     font-family: 'Syne', sans-serif; font-size: 72px; font-weight: 800;
@@ -162,7 +154,22 @@
   .timer-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 1s linear, background 0.5s; }
   .timer-fill.urgent { background: var(--red); }
 
-  /* ── respostas ao vivo ── */
+  /* ── gabarito oculto do professor ── */
+  .answer-toggle-wrap { margin-top: 4px; }
+  .btn-toggle-answer {
+    background: rgba(253,203,110,0.1); color: var(--amber);
+    border: 1px solid rgba(253,203,110,0.3); border-radius: 8px;
+    padding: 8px 16px; font-size: 13px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+  }
+  .btn-toggle-answer:hover { background: rgba(253,203,110,0.18); }
+  .answer-hidden-box {
+    background: rgba(253,203,110,0.08); border: 1px solid rgba(253,203,110,0.25);
+    border-radius: 8px; padding: 12px 16px; margin-top: 8px;
+    font-size: 14px; color: var(--amber); display: none;
+  }
+  .answer-hidden-box strong { font-family: 'Syne', sans-serif; font-size: 15px; }
+
   .live-answers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
   .live-answer-bar {
     text-align: center; border-radius: 8px; padding: 12px 8px;
@@ -172,7 +179,6 @@
   .live-answer-bar .lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .live-answer-bar .bar-inner { height: 6px; border-radius: 3px; margin-top: 8px; min-width: 4px; transition: width 0.3s; }
 
-  /* ── placar ── */
   .scoreboard { }
   .score-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -186,11 +192,7 @@
   .pos { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--muted); min-width: 32px; }
   .score-pts { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; color: var(--accent2); }
 
-  /* ── loading ── */
-  .loading {
-    text-align: center; padding: 40px;
-    color: var(--muted); font-size: 14px;
-  }
+  .loading { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
   .spinner {
     width: 36px; height: 36px; border: 3px solid var(--border);
     border-top-color: var(--accent); border-radius: 50%;
@@ -198,13 +200,11 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── progress ── */
   .q-progress { display: flex; gap: 6px; margin-bottom: 20px; }
   .q-dot { width: 28px; height: 6px; border-radius: 3px; background: var(--surface2); flex: 1; transition: background 0.3s; }
   .q-dot.done { background: var(--green); }
   .q-dot.active { background: var(--accent); }
 
-  /* ── misc ── */
   .tag { display: inline-block; font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 500; }
   .tag-green { background: rgba(0,184,148,0.15); color: var(--green); border: 1px solid rgba(0,184,148,0.3); }
   .tag-amber { background: rgba(253,203,110,0.12); color: var(--amber); border: 1px solid rgba(253,203,110,0.3); }
@@ -231,13 +231,13 @@
 <div class="app">
 
   <div class="topbar">
-    <div class="logo">Quiz<span>ETEC</span></div>
-    <span class="badge-role">Painel do Professor</span>
+    <div class="logo">Quiz<span>Flow</span></div>
+    <div class="topbar-right">
+      <span class="badge-role">Painel do Professor</span>
+      <span class="by-author">by Roberto Maia</span>
+    </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: FIREBASE CONFIG
-  ══════════════════════════════════════════ -->
   <div id="screen-config" class="screen active">
     <div id="config-notice">
       <strong>Configure o Firebase antes de começar.</strong><br>
@@ -269,13 +269,10 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: SETUP DO QUIZ
-  ══════════════════════════════════════════ -->
   <div id="screen-setup" class="screen">
     <div class="card">
-      <div class="card-title">Tema do quiz — Matemática ETEC</div>
-      <div class="mb8"><label>Subtópico</label>
+      <div class="card-title">Configurar Quiz</div>
+      <div class="mb8"><label>Tema</label>
         <input type="text" id="inp-tema" placeholder="Ex: equações do 1º grau, frações, geometria plana...">
       </div>
       <div class="chips" id="chips">
@@ -301,6 +298,8 @@
             <option value="5" selected>5</option>
             <option value="8">8</option>
             <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
           </select>
         </div>
         <div><label>Tempo por questão</label>
@@ -309,6 +308,8 @@
             <option value="20" selected>20 seg</option>
             <option value="30">30 seg</option>
             <option value="45">45 seg</option>
+            <option value="50">50 seg</option>
+            <option value="60">60 seg</option>
           </select>
         </div>
         <div><label>Nível</label>
@@ -332,9 +333,6 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: GERANDO
-  ══════════════════════════════════════════ -->
   <div id="screen-generating" class="screen">
     <div class="loading">
       <div class="spinner"></div>
@@ -343,16 +341,12 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: LOBBY
-  ══════════════════════════════════════════ -->
   <div id="screen-lobby" class="screen">
     <div class="room-code-display">
       <div class="small" style="margin-bottom:8px;letter-spacing:2px;text-transform:uppercase">Código da sala</div>
       <div class="room-code" id="room-code-display">----</div>
       <div class="room-url mt8" id="room-url-display"></div>
     </div>
-
     <div class="card">
       <div class="flex-between mb8">
         <div class="card-title" style="margin-bottom:0">Aguardando jogadores</div>
@@ -362,7 +356,6 @@
         <div class="small" style="color:var(--muted);padding:12px 0">Nenhum jogador ainda...</div>
       </div>
     </div>
-
     <div class="card">
       <div class="card-title">Quiz pronto</div>
       <div class="small">
@@ -372,46 +365,43 @@
         <span id="lobby-nivel"></span>
       </div>
     </div>
-
     <div class="grid2 mt16">
       <button class="btn btn-secondary" id="btn-back-setup">Cancelar</button>
-      <button class="btn btn-primary" id="btn-start-quiz" id="btn-start-quiz">Iniciar quiz</button>
+      <button class="btn btn-primary" id="btn-start-quiz">Iniciar quiz</button>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: QUESTÃO AO VIVO
-  ══════════════════════════════════════════ -->
   <div id="screen-question" class="screen">
     <div class="flex-between mb8">
       <div class="q-progress" id="q-progress"></div>
       <span class="tag tag-purple" id="q-answered-count">0 responderam</span>
     </div>
-
     <div class="card" style="margin-bottom:12px">
       <div class="small mb8" id="q-num-label">Questão 1 de 5</div>
       <div class="live-question-text" id="q-text-display"></div>
       <div class="answers-grid" id="q-answers-display"></div>
+      <div class="answer-toggle-wrap">
+        <button class="btn-toggle-answer" id="btn-toggle-answer" onclick="toggleAnswerHint()">
+          👁 Ver resposta correta
+        </button>
+        <div class="answer-hidden-box" id="answer-hidden-box">
+          <strong id="answer-hint-text"></strong>
+        </div>
+      </div>
     </div>
-
     <div class="timer-wrap card" style="padding:16px">
       <div class="timer-big" id="timer-big">20</div>
       <div class="timer-bar"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
     </div>
-
     <div class="card" style="margin-top:12px">
       <div class="card-title">Respostas em tempo real</div>
       <div class="live-answers" id="live-answers"></div>
     </div>
-
-    <button class="btn btn-success" id="btn-reveal" id="btn-reveal" style="width:100%;margin-top:8px">
+    <button class="btn btn-success" id="btn-reveal" style="width:100%;margin-top:8px">
       Revelar resposta antecipadamente
     </button>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: REVELAÇÃO
-  ══════════════════════════════════════════ -->
   <div id="screen-reveal" class="screen">
     <div class="card" style="margin-bottom:12px">
       <div class="small mb8" id="rev-q-label"></div>
@@ -419,20 +409,15 @@
       <div class="answers-grid" id="rev-answers"></div>
       <div class="feedback-reveal" id="rev-explanation"></div>
     </div>
-
     <div class="card">
       <div class="card-title">Resultado desta questão</div>
       <div class="live-answers" id="rev-answers-count"></div>
     </div>
-
     <div class="mt16">
-      <button class="btn btn-primary" id="btn-next-q" id="btn-next-q">Próxima questão</button>
+      <button class="btn btn-primary" id="btn-next-q">Próxima questão</button>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       SCREEN: PLACAR FINAL
-  ══════════════════════════════════════════ -->
   <div id="screen-final" class="screen">
     <div style="text-align:center;padding:24px 0 16px">
       <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800">Quiz finalizado!</div>
@@ -452,13 +437,11 @@
     </div>
   </div>
 
-</div><!-- .app -->
+</div>
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-// aliases compat Firebase
 function initializeApp(cfg, name) {
   try { return firebase.app(name); } catch(e) { return firebase.initializeApp(cfg, name); }
 }
@@ -474,7 +457,6 @@ function onValue(r, cb, opts) {
 }
 function push(r) { return r.push(); }
 
-// ── state ──────────────────────────────────────────
 let db, roomCode, roomRef;
 let questions = [];
 let currentQIdx = 0;
@@ -485,7 +467,6 @@ let playersCache = {};
 let answersCache = {};
 let quizConfig = {};
 
-// ── colors for avatars ──────────────────────────────
 const COLORS = [
   ['#6c5ce7','#EEEDFE'],['#00b894','#E1F5EE'],['#fdcb6e','#2C2C2A'],
   ['#d63031','#FCEBEB'],['#a29bfe','#3C3489'],['#55efc4','#085041']
@@ -495,7 +476,6 @@ function avatarColor(name) {
   return COLORS[h % COLORS.length];
 }
 
-// ── config persistence ─────────────────────────────
 function loadConfig() {
   const saved = localStorage.getItem('fbConfig');
   if (!saved) return null;
@@ -539,7 +519,6 @@ function showError(id, msg) {
   setTimeout(() => el.style.display='none', 5000);
 }
 
-// ── chips ─────────────────────────────────────────
 document.querySelectorAll('.chip').forEach(c => {
   c.addEventListener('click', () => {
     document.querySelectorAll('.chip').forEach(x => x.classList.remove('sel'));
@@ -548,7 +527,6 @@ document.querySelectorAll('.chip').forEach(c => {
   });
 });
 
-// ── generate + create room ─────────────────────────
 window.generateAndCreate = async function() {
   const tema = document.getElementById('inp-tema').value.trim();
   if (!tema) { document.getElementById('inp-tema').focus(); return; }
@@ -583,13 +561,10 @@ Responda APENAS com JSON válido, sem texto antes ou depois:
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
     const data = await res.json();
-    // verificar erro da API Gemini
     if (data.error) throw new Error('Gemini: ' + data.error.message);
     const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    console.log('Gemini raw:', raw); // debug
-    // limpar markdown e extrair JSON
+    console.log('Gemini raw:', raw);
     let txt = raw.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
-    // se vier texto antes do {, extrair só o JSON
     const jsonStart = txt.indexOf('{');
     const jsonEnd = txt.lastIndexOf('}');
     if (jsonStart === -1 || jsonEnd === -1) throw new Error('JSON não encontrado na resposta do Gemini');
@@ -659,7 +634,6 @@ function renderPlayers() {
   }).join('');
 }
 
-// ── start quiz ─────────────────────────────────────
 window.startQuiz = async function() {
   currentQIdx = 0;
   await update(roomRef, { status: 'playing', currentQ: 0 });
@@ -676,6 +650,24 @@ function buildQProgress() {
 const LABELS = ['A','B','C','D'];
 const CLASSES = ['a','b','c','d'];
 
+window.toggleAnswerHint = function() {
+  const box = document.getElementById('answer-hidden-box');
+  const btn = document.getElementById('btn-toggle-answer');
+  const visible = box.style.display === 'block';
+  box.style.display = visible ? 'none' : 'block';
+  btn.textContent = visible ? '👁 Ver resposta correta' : '🙈 Ocultar resposta';
+}
+
+function setAnswerHint(idx) {
+  const q = questions[idx];
+  const box = document.getElementById('answer-hidden-box');
+  const btn = document.getElementById('btn-toggle-answer');
+  box.style.display = 'none';
+  btn.textContent = '👁 Ver resposta correta';
+  document.getElementById('answer-hint-text').textContent =
+    'Resposta correta: ' + LABELS[q.correta] + ') ' + q.alternativas[q.correta];
+}
+
 function showQuestion(idx) {
   clearInterval(timerInterval);
   answersCache = {};
@@ -690,6 +682,7 @@ function showQuestion(idx) {
   ).join('');
 
   buildQProgress();
+  setAnswerHint(idx);
   initLiveAnswers(0,0,0,0);
   showScreen('screen-question');
   startTimer(idx);
@@ -698,7 +691,6 @@ function showQuestion(idx) {
     answersCache = snap.val() || {};
     const counts = [0,0,0,0];
     Object.values(answersCache).forEach(a => { if(a.answer>=0&&a.answer<=3) counts[a.answer]++; });
-    const total = Object.keys(playersCache).length;
     initLiveAnswers(...counts);
     document.getElementById('q-answered-count').textContent =
       Object.keys(answersCache).length+' responderam';
@@ -747,7 +739,6 @@ async function autoReveal(idx) {
   const counts = [0,0,0,0];
   Object.values(answersCache).forEach(a => { if(a.answer>=0&&a.answer<=3) counts[a.answer]++; });
 
-  // score players
   const total = totalTime;
   const updates = {};
   Object.entries(answersCache).forEach(([pid, a]) => {
@@ -797,7 +788,6 @@ window.nextQuestion = async function() {
   showQuestion(next);
 }
 
-// ── final ──────────────────────────────────────────
 async function showFinal() {
   await update(roomRef, { status: 'final' });
   const snap = await get(ref(db, 'rooms/'+roomCode+'/players'));
@@ -838,21 +828,13 @@ window.exportResults = async function() {
 
 window.backToSetup = function() { showScreen('screen-setup'); }
 window.newQuiz = function() { questions=[]; currentQIdx=0; showScreen('screen-setup'); }
+window.resetConfig = function() { localStorage.removeItem('fbConfig'); location.reload(); }
 
-// ── reconfigurar ───────────────────────────────────
-window.resetConfig = function() {
-  localStorage.removeItem('fbConfig');
-  location.reload();
-}
-
-// ── init ───────────────────────────────────────────
 function initApp() {
-  // pre-popular campos se houver config salva
   const savedKey = localStorage.getItem('geminiKey');
   if (savedKey) { const el = document.getElementById('gemini-key'); if(el) el.value = savedKey; }
   const saved = loadConfig();
   if (!saved) { showScreen('screen-config'); return; }
-  // valida campos obrigatórios antes de inicializar
   if (!saved.apiKey || saved.apiKey.length < 10 ||
       !saved.databaseURL || !saved.databaseURL.includes('firebaseio.com')) {
     localStorage.removeItem('fbConfig');
@@ -869,7 +851,6 @@ function initApp() {
   }
 }
 
-// ── event bindings ──────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const bind = (id, fn) => { const el = document.getElementById(id); if(el) el.addEventListener('click', fn); };
   bind('btn-save-config',  saveConfig);
