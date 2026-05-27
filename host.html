@@ -450,9 +450,19 @@
 </div><!-- .app -->
 
 <!-- Firebase SDK -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, get, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+// aliases para manter compatibilidade com o código existente
+function initializeApp(cfg, name) { return firebase.initializeApp(cfg, name); }
+function getDatabase(app) { return app.database(); }
+function ref(db, path) { return db.ref(path); }
+function set(r, val) { return r.set(val); }
+function get(r) { return r.get(); }
+function update(r, val) { return r.update(val); }
+function remove(r) { return r.remove(); }
+function onValue(r, cb) { r.on('value', snap => cb(snap)); return () => r.off('value'); }
+function push(r) { return r.push(); }
 
 // ── state ──────────────────────────────────────────
 let db, roomCode, roomRef;
@@ -809,7 +819,7 @@ window.resetConfig = function() {
 }
 
 // ── init ───────────────────────────────────────────
-(function init() {
+function initApp() {
   const saved = loadConfig();
   if (!saved) { showScreen('screen-config'); return; }
   // valida campos obrigatórios antes de inicializar
@@ -827,20 +837,21 @@ window.resetConfig = function() {
     localStorage.removeItem('fbConfig');
     showScreen('screen-config');
   }
-})();
+}
 
-// ── event bindings (evita problemas com type=module scope) ──
+// ── event bindings ──────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const bind = (id, fn) => { const el = document.getElementById(id); if(el) el.addEventListener('click', fn); };
-  bind('btn-save-config',  () => saveConfig());
-  bind('btn-generate',     () => generateAndCreate());
-  bind('btn-reset-config', () => resetConfig());
-  bind('btn-back-setup',   () => backToSetup());
-  bind('btn-start-quiz',   () => startQuiz());
-  bind('btn-reveal',       () => revealAnswer());
-  bind('btn-next-q',       () => nextQuestion());
-  bind('btn-new-quiz',     () => newQuiz());
-  bind('btn-export',       () => exportResults());
+  bind('btn-save-config',  saveConfig);
+  bind('btn-generate',     generateAndCreate);
+  bind('btn-reset-config', resetConfig);
+  bind('btn-back-setup',   backToSetup);
+  bind('btn-start-quiz',   startQuiz);
+  bind('btn-reveal',       revealAnswer);
+  bind('btn-next-q',       nextQuestion);
+  bind('btn-new-quiz',     newQuiz);
+  bind('btn-export',       exportResults);
+  initApp();
 });
 </script>
 </body>
