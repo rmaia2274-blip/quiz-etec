@@ -706,11 +706,13 @@ function showActiveKeyBadge() {
 // ── Gemini request com retry automático (429) ──────
 async function geminiRequest(parts, maxRetries) {
   maxRetries = maxRetries || 5;
-  // chave ativa é gerenciada pelo pool — getActiveKey() rotaciona automaticamente
+  // usa while para controlar attempt manualmente:
+  // troca de chave (RPD) NAO incrementa attempt — so erros de RPM incrementam
+  let attempt = 0;
   let lastError;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+  while (attempt <= maxRetries) {
     const activeKey = getActiveKey();
-    if(!activeKey) throw new Error('TODAS_ESGOTADAS: Todas as chaves Gemini atingiram o limite diario. Adicione novas chaves ou aguarde o reset a meia-noite.');
+    if (!activeKey) throw new Error('TODAS_ESGOTADAS: Todas as chaves Gemini atingiram o limite diario. Adicione novas chaves ou aguarde o reset a meia-noite.');
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`;
     const res = await fetch(url, {
       method: 'POST',
@@ -729,33 +731,34 @@ async function geminiRequest(parts, maxRetries) {
     const isRPD = !retrySec || retrySec > 600;
 
     if (isRPD) {
-      // marca chave atual como esgotada e tenta a proxima sem contar como attempt
+      // marca chave como esgotada — NAO incrementa attempt
       markKeyExhausted(activeKey);
       const nextKey = getActiveKey();
       if (nextKey) {
-        // tem proxima chave disponivel — continua sem decrementar attempt
         const msgEl = document.getElementById('gen-msg');
         const subEl = document.getElementById('gen-sub');
-        if (msgEl) msgEl.textContent = '🔄 Chave esgotada — alternando para proxima chave...';
-        if (subEl) subEl.textContent = 'Tentando com outra chave em 2s...';
+        const pool = loadKeyPool();
+        const nextIdx = pool.findIndex(k => !k.exhausted) + 1;
+        if (msgEl) msgEl.textContent = '🔄 Chave esgotada — alternando para chave ' + nextIdx + ' de ' + pool.length + '...';
+        if (subEl) subEl.textContent = 'Tentando em 2s...';
         await new Promise(r => setTimeout(r, 2000));
-        continue; // volta ao topo do for sem incrementar attempt
+        // NAO incrementa attempt — continua com nova chave
       } else {
-        // todas as chaves esgotadas
         throw new Error(
           'TODAS_ESGOTADAS: Todas as chaves Gemini atingiram o limite diario. ' +
           'Adicione novas chaves em Configuracoes ou aguarde o reset a meia-noite (horario de Brasilia).'
         );
       }
-    }
-
-    // RPM - espera o tempo sugerido + 5s de margem e tenta novamente
-    if (attempt < maxRetries) {
-      const waitSec = Math.ceil(retrySec) + 5;
-      lastError = new Error('Gemini: ' + msg);
-      await countdownWait(waitSec, attempt + 1, maxRetries);
     } else {
-      throw new Error('Gemini: cota por minuto excedida apos ' + maxRetries + ' tentativas. Aguarde 1 minuto e tente novamente.');
+      // RPM — incrementa attempt e aguarda
+      if (attempt < maxRetries) {
+        const waitSec = Math.ceil(retrySec) + 5;
+        lastError = new Error('Gemini: ' + msg);
+        await countdownWait(waitSec, attempt + 1, maxRetries);
+      } else {
+        throw new Error('Gemini: cota por minuto excedida apos ' + maxRetries + ' tentativas. Aguarde 1 minuto e tente novamente.');
+      }
+      attempt++; // so incrementa em erros de RPM
     }
   }
   throw lastError;
