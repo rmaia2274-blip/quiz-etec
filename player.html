@@ -381,8 +381,10 @@ function showQuestion(idx,room){
   const q=questions[idx];if(!q)return;
 
   // calcula tempo restante sincronizado com servidor
-  const elapsed=Math.floor((Date.now()-serverTimerStart)/1000);
-  timeLeft=Math.max(0,serverTimerDuration-elapsed);
+  // usa round() em vez de floor() para evitar truncamento; minimo 1s para nao pular imediatamente
+  const elapsedMs=Date.now()-serverTimerStart;
+  const elapsedSec=Math.round(elapsedMs/1000);
+  timeLeft=Math.max(1,serverTimerDuration-elapsedSec);
   totalTime=serverTimerDuration;
 
   const prog=document.getElementById('q-progress');
@@ -423,19 +425,33 @@ async function showAnswered(answerIdx){
   document.getElementById('ans-title').textContent='Resposta '+LETTERS[answerIdx]+' enviada!';
   document.getElementById('ans-sub').textContent='Aguardando o professor revelar...';
   const rankEl=document.getElementById('ans-rank');
+  rankEl.style.display='none';
+  showScreen('screen-answered');
+  // busca rank em background — so exibe se houver score diferenciado (apos 1a questao)
   const rankData=await getMyRank();
   if(rankData&&rankData.total>1){
-    rankEl.style.display='block';
-    rankEl.textContent='Sua posição atual: '+formatRank(rankData.pos,rankData.total);
-    updateRankPill(rankData.pos,rankData.total);
+    // verifica se ha pelo menos um jogador com score > 0 (pos 1a revelacao)
+    const snap=await get(ref(db,'rooms/'+roomCode+'/players'));
+    const players=Object.values(snap.val()||{});
+    const anyScore=players.some(p=>(p.score||0)>0);
+    if(anyScore){
+      rankEl.style.display='block';
+      rankEl.textContent='Posição atual: '+formatRank(rankData.pos,rankData.total);
+      updateRankPill(rankData.pos,rankData.total);
+    }
   }
-  showScreen('screen-answered');
 }
 
 function startTimer(idx){
+  // ancora no timestamp real para compensar drift do setInterval
+  const timerAnchor=Date.now();
+  const startingTime=timeLeft;
   updateTimerUI(timeLeft,totalTime);
   timerInterval=setInterval(()=>{
-    timeLeft--;updateTimerUI(timeLeft,totalTime);
+    // recalcula com base no tempo real decorrido desde o inicio do timer local
+    const realElapsed=Math.round((Date.now()-timerAnchor)/1000);
+    timeLeft=Math.max(0,startingTime-realElapsed);
+    updateTimerUI(timeLeft,totalTime);
     if(timeLeft<=0){
       clearInterval(timerInterval);
       if(!hasAnswered){
@@ -448,7 +464,7 @@ function startTimer(idx){
         showScreen('screen-answered');
       }
     }
-  },1000);
+  },500); // tick a cada 500ms para maior precisao visual
 }
 
 function updateTimerUI(t,total){
@@ -488,6 +504,8 @@ async function handleReveal(idx,room){
   document.getElementById('rev-score').textContent=myScore.toLocaleString()+' pts';
   document.getElementById('score-display').textContent=myScore+' pts';
   if(playerRef)update(playerRef,{score:myScore});
+  // aguarda 500ms para o Firebase propagar os scores atualizados antes de buscar rank
+  await new Promise(r=>setTimeout(r,500));
   const rankData=await getMyRank();
   const revRankTxt=document.getElementById('rev-rank-txt');
   if(rankData&&rankData.total>1){
