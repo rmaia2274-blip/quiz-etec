@@ -550,6 +550,55 @@ Para questões que envolvam figuras geométricas (triângulos, retângulos, cír
 - Para questões SEM figura visual: retorne "svg": null`;
 
 // ── Generate ───────────────────────────────────────
+// ── Gemini request com retry automático (429) ──────
+async function geminiRequest(parts, maxRetries) {
+  maxRetries = maxRetries || 3;
+  const geminiKey = localStorage.getItem('geminiKey') || '';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts }] })
+    });
+    const data = await res.json();
+    if (!data.error) return data;
+    const msg = data.error.message || '';
+    const is429 = res.status === 429 || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED');
+    if (is429 && attempt < maxRetries) {
+      // extrai segundos de retry sugerido ou usa backoff exponencial
+      const retryMatch = msg.match(/retry in ([\d.]+)s/i);
+      const waitSec = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) + 2 : Math.min(15 * (attempt + 1), 60);
+      await countdownWait(waitSec, attempt + 1, maxRetries);
+    } else {
+      lastError = new Error('Gemini: ' + msg);
+      if (!is429) throw lastError; // erro não-recuperável, lança imediatamente
+    }
+  }
+  throw lastError || new Error('Gemini: cota excedida após ' + maxRetries + ' tentativas');
+}
+
+function countdownWait(seconds, attempt, maxRetries) {
+  return new Promise(resolve => {
+    const msgEl = document.getElementById('gen-msg');
+    const subEl = document.getElementById('gen-sub');
+    let remaining = seconds;
+    if (msgEl) msgEl.textContent = `⏳ Cota da API atingida — tentativa ${attempt} de ${maxRetries}`;
+    const tick = setInterval(() => {
+      remaining--;
+      if (subEl) subEl.textContent = `Aguardando ${remaining}s para tentar novamente...`;
+      if (remaining <= 0) {
+        clearInterval(tick);
+        if (msgEl) msgEl.textContent = 'Gerando questões com IA...';
+        if (subEl) subEl.textContent = '';
+        resolve();
+      }
+    }, 1000);
+    if (subEl) subEl.textContent = `Aguardando ${remaining}s para tentar novamente...`;
+  });
+}
+
 window.generateAndCreate=async function(){
   const tema=document.getElementById('inp-tema').value.trim();
   if(!tema){document.getElementById('inp-tema').focus();return;}
@@ -579,7 +628,6 @@ Responda APENAS com JSON válido, sem texto antes ou depois:
 
 "correta" é o índice 0-3 da alternativa correta.`;
   try{
-    const geminiKey=localStorage.getItem('geminiKey')||'';
     const parts=[];
     if(materialContext&&materialContext.type==='pdf'){
       parts.push({inline_data:{mime_type:'application/pdf',data:materialContext.content}});
@@ -587,12 +635,7 @@ Responda APENAS com JSON válido, sem texto antes ou depois:
       parts.push({text:'MATERIAL DE REFERÊNCIA:\n'+materialContext.content.substring(0,60000)+'\n\n---\n'});
     }
     parts.push({text:prompt});
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts}]})
-    });
-    const data=await res.json();
-    if(data.error)throw new Error('Gemini: '+data.error.message);
+    const data=await geminiRequest(parts, 3);
     const raw=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
     let txt=raw.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
     const jS=txt.indexOf('{'),jE=txt.lastIndexOf('}');
@@ -606,9 +649,11 @@ Responda APENAS com JSON válido, sem texto antes ou depois:
     });
     showPreview();
   }catch(e){
-    document.getElementById('gen-msg').textContent='Erro: '+e.message;
-    document.getElementById('gen-sub').textContent='Voltando...';
-    setTimeout(()=>showScreen('screen-setup'),3000);
+    const msgEl=document.getElementById('gen-msg');
+    const subEl=document.getElementById('gen-sub');
+    if(msgEl)msgEl.textContent='Erro: '+e.message;
+    if(subEl)subEl.textContent='Voltando para o setup em 4 segundos...';
+    setTimeout(()=>showScreen('screen-setup'),4000);
   }
 }
 
@@ -643,18 +688,12 @@ window.regenQuestion=async function(idx){
   const spinner=document.getElementById('rspinner-'+idx);
   spinner.style.display='inline-block';
   const q=questions[idx];
-  const geminiKey=localStorage.getItem('geminiKey')||'';
   const prompt=`Crie UMA questão de múltipla escolha de Matemática sobre "${quizConfig.tema}", nível ${quizConfig.nivel}, DIFERENTE desta: "${q.enunciado}".
 Regras: 4 alternativas (A,B,C,D), uma correta, explicação máx 80 palavras.
 ${SVG_INSTRUCTIONS}
 Responda APENAS com JSON: {"enunciado":"...","alternativas":["A)...","B)...","C)...","D)..."],"correta":0,"explicacao":"...","svg":null}`;
   try{
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
-    });
-    const data=await res.json();
-    if(data.error)throw new Error(data.error.message);
+    const data=await geminiRequest([{text:prompt}], 3);
     const raw=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
     let txt=raw.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
     const jS=txt.indexOf('{'),jE=txt.lastIndexOf('}');
