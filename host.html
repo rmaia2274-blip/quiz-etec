@@ -566,19 +566,31 @@ async function geminiRequest(parts, maxRetries) {
     if (!data.error) return data;
     const msg = data.error.message || '';
     const is429 = res.status === 429 || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED');
-    if (is429 && attempt < maxRetries) {
-      // usa exatamente o tempo sugerido pela API + 5s de margem
-      const retryMatch = msg.match(/retry in ([\d.]+)s/i);
-      const waitSec = retryMatch
-        ? Math.ceil(parseFloat(retryMatch[1])) + 5
-        : Math.min(20 * Math.pow(2, attempt), 120); // backoff: 20s, 40s, 80s, 120s...
+    if (!is429) throw new Error('Gemini: ' + msg); // erro nao-recuperavel
+
+    // detecta RPD: sem "retry in Xs" ou tempo sugerido acima de 10 min
+    const retryMatch = msg.match(/retry in ([\d.]+)s/i);
+    const retrySec = retryMatch ? parseFloat(retryMatch[1]) : null;
+    const isRPD = !retrySec || retrySec > 600;
+
+    if (isRPD) {
+      // cota diaria esgotada - retry inutl, avisa e encerra imediatamente
+      throw new Error(
+        'COTA_DIARIA: Limite diario de requisicoes do Gemini atingido. ' +
+        'A cota renova a meia-noite (horario de Brasilia). Tente novamente amanha.'
+      );
+    }
+
+    // RPM - espera o tempo sugerido + 5s de margem e tenta novamente
+    if (attempt < maxRetries) {
+      const waitSec = Math.ceil(retrySec) + 5;
       lastError = new Error('Gemini: ' + msg);
       await countdownWait(waitSec, attempt + 1, maxRetries);
     } else {
-      throw new Error('Gemini: ' + msg); // erro não-recuperável, lança imediatamente
+      throw new Error('Gemini: cota por minuto excedida apos ' + maxRetries + ' tentativas. Aguarde 1 minuto e tente novamente.');
     }
   }
-  throw lastError || new Error('Gemini: cota excedida após ' + maxRetries + ' tentativas');
+  throw lastError;
 }
 
 function countdownWait(seconds, attempt, maxRetries) {
@@ -653,8 +665,14 @@ Responda APENAS com JSON válido, sem texto antes ou depois:
   }catch(e){
     const msgEl=document.getElementById('gen-msg');
     const subEl=document.getElementById('gen-sub');
-    if(msgEl)msgEl.textContent='Erro: '+e.message;
-    if(subEl)subEl.textContent='Voltando para o setup em 4 segundos...';
+    const isRPD=e.message.startsWith('COTA_DIARIA:');
+    if(isRPD){
+      if(msgEl)msgEl.textContent='📵 Limite diário da API atingido';
+      if(subEl)subEl.textContent='A cota do Gemini renova à meia-noite (horário de Brasília). Voltando...';
+    }else{
+      if(msgEl)msgEl.textContent='Erro: '+e.message;
+      if(subEl)subEl.textContent='Voltando para o setup em 4 segundos...';
+    }
     setTimeout(()=>showScreen('screen-setup'),4000);
   }
 }
