@@ -153,6 +153,19 @@ hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
 /* histórico */
 .hist-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all 0.15s;}
 .hist-row:hover{border-color:var(--accent);}
+/* multi-key */
+.key-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.key-row input{flex:1;font-family:monospace;font-size:13px;}
+.key-status{font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600;white-space:nowrap;}
+.key-status.ok{background:rgba(0,184,148,0.15);color:var(--green);border:1px solid rgba(0,184,148,0.3);}
+.key-status.esgotada{background:rgba(214,48,49,0.12);color:var(--red);border:1px solid rgba(214,48,49,0.3);}
+.key-status.ativa{background:rgba(108,92,231,0.15);color:var(--accent2);border:1px solid rgba(108,92,231,0.3);}
+.key-status.aguardando{background:rgba(253,203,110,0.12);color:var(--amber);border:1px solid rgba(253,203,110,0.3);}
+.btn-add-key{background:none;border:1px dashed rgba(162,155,254,0.35);border-radius:8px;width:100%;padding:8px;color:var(--accent2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;margin-top:4px;transition:all 0.15s;}
+.btn-add-key:hover{background:rgba(108,92,231,0.08);border-color:var(--accent);}
+.btn-del-key{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:0 4px;transition:color 0.15s;}
+.btn-del-key:hover{color:var(--red);}
+.keys-info{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6;}
 .hist-meta{font-size:12px;color:var(--muted);margin-top:2px;}
 </style>
 </head>
@@ -178,9 +191,13 @@ hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
     <div class="card">
       <div class="card-title">Credenciais</div>
       <div style="margin-bottom:16px;padding:14px;background:rgba(253,203,110,0.08);border:1px solid rgba(253,203,110,0.3);border-radius:8px">
-        <label style="color:var(--amber);margin-bottom:6px">Chave de API Google Gemini</label>
-        <input type="text" id="gemini-key" placeholder="AIza..." style="font-family:monospace">
-        <div style="font-size:11px;color:var(--muted);margin-top:6px">Gratuita em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--amber)">aistudio.google.com/apikey</a></div>
+        <label style="color:var(--amber);margin-bottom:8px">Chaves de API Google Gemini</label>
+        <div id="keys-list"></div>
+        <button class="btn-add-key" onclick="addKeyRow()">+ Adicionar chave</button>
+        <div class="keys-info">
+          Adicione até 5 chaves. Quando uma atingir o limite diário, o sistema usa a próxima automaticamente.<br>
+          Gratuitas em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--amber)">aistudio.google.com/apikey</a>
+        </div>
       </div>
       <div class="firebase-fields">
         <div><label>API Key Firebase</label><input type="text" id="fb-apiKey" placeholder="AIzaSy..."></div>
@@ -550,13 +567,151 @@ Para questões que envolvam figuras geométricas (triângulos, retângulos, cír
 - Para questões SEM figura visual: retorne "svg": null`;
 
 // ── Generate ───────────────────────────────────────
+// ── Pool de chaves Gemini ──────────────────────────
+// Estrutura salva no localStorage: { keys: [{key, exhausted, exhaustedAt}] }
+const KEYS_STORAGE = 'geminiKeys';
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function loadKeyPool() {
+  try {
+    const raw = localStorage.getItem(KEYS_STORAGE);
+    if (!raw) {
+      // migração: se tinha chave única antiga, importa
+      const legacy = localStorage.getItem('geminiKey');
+      if (legacy) return [{ key: legacy, exhausted: false, exhaustedAt: null }];
+      return [];
+    }
+    const pool = JSON.parse(raw);
+    // reset automático de chaves esgotadas há mais de 24h
+    pool.forEach(k => {
+      if (k.exhausted && k.exhaustedAt && (Date.now() - k.exhaustedAt) > DAY_MS) {
+        k.exhausted = false; k.exhaustedAt = null;
+      }
+    });
+    return pool;
+  } catch(e) { return []; }
+}
+
+function saveKeyPool(pool) {
+  localStorage.setItem(KEYS_STORAGE, JSON.stringify(pool));
+}
+
+function saveGeminiKeys(keysArray) {
+  const existing = loadKeyPool();
+  const pool = keysArray.map(k => {
+    const ex = existing.find(e => e.key === k);
+    return ex || { key: k, exhausted: false, exhaustedAt: null };
+  });
+  saveKeyPool(pool);
+}
+
+function getActiveKey() {
+  const pool = loadKeyPool();
+  const active = pool.find(k => !k.exhausted);
+  return active ? active.key : null;
+}
+
+function markKeyExhausted(key) {
+  const pool = loadKeyPool();
+  const entry = pool.find(k => k.key === key);
+  if (entry) { entry.exhausted = true; entry.exhaustedAt = Date.now(); }
+  saveKeyPool(pool);
+  renderKeyStatusBadges(); // atualiza badges se a tela de config estiver visível
+}
+
+// ── UI: painel de chaves ───────────────────────────
+function renderKeyRows() {
+  const pool = loadKeyPool();
+  const container = document.getElementById('keys-list');
+  if (!container) return;
+  if (pool.length === 0) {
+    // começa com uma linha vazia
+    container.innerHTML = buildKeyRow('', false, 0);
+    return;
+  }
+  container.innerHTML = pool.map((k, i) => buildKeyRow(k.key, k.exhausted, i)).join('');
+}
+
+function buildKeyRow(key, exhausted, idx) {
+  const statusText = exhausted ? 'Esgotada hoje' : (key ? 'Disponível' : '');
+  const statusClass = exhausted ? 'esgotada' : (key ? 'ok' : '');
+  const statusHtml = key
+    ? `<span class="key-status ${statusClass}">${statusText}</span>`
+    : '';
+  const deleteBtn = `<button class="btn-del-key" onclick="removeKeyRow(${idx})" title="Remover">✕</button>`;
+  return `<div class="key-row" data-idx="${idx}">
+    <input type="text" class="gemini-key-input" placeholder="AIza..." value="${key}" style="font-family:monospace;font-size:13px" oninput="onKeyInput(this)">
+    ${statusHtml}
+    ${deleteBtn}
+  </div>`;
+}
+
+window.addKeyRow = function() {
+  const pool = loadKeyPool();
+  if (pool.length >= 5) { alert('Máximo de 5 chaves.'); return; }
+  const container = document.getElementById('keys-list');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.innerHTML = buildKeyRow('', false, pool.length);
+  container.appendChild(div.firstElementChild);
+}
+
+window.removeKeyRow = function(idx) {
+  const rows = document.querySelectorAll('.key-row');
+  if (rows.length <= 1) { rows[0].querySelector('input').value = ''; return; }
+  rows[idx]?.remove();
+  // renumera data-idx
+  document.querySelectorAll('.key-row').forEach((r, i) => {
+    r.dataset.idx = i;
+    const btn = r.querySelector('.btn-del-key');
+    if (btn) btn.setAttribute('onclick', `removeKeyRow(${i})`);
+  });
+}
+
+window.onKeyInput = function(input) {
+  // remove badge de status ao editar
+  const row = input.closest('.key-row');
+  if (row) { const badge = row.querySelector('.key-status'); if (badge) badge.remove(); }
+}
+
+function renderKeyStatusBadges() {
+  const pool = loadKeyPool();
+  document.querySelectorAll('.key-row').forEach((row, i) => {
+    const k = pool[i];
+    if (!k) return;
+    let badge = row.querySelector('.key-status');
+    if (!badge && k.key) {
+      badge = document.createElement('span');
+      badge.className = 'key-status';
+      row.insertBefore(badge, row.querySelector('.btn-del-key'));
+    }
+    if (badge && k.key) {
+      badge.className = 'key-status ' + (k.exhausted ? 'esgotada' : 'ok');
+      badge.textContent = k.exhausted ? 'Esgotada hoje' : 'Disponível';
+    }
+  });
+}
+
+// badge "ativa" na tela de geração
+function showActiveKeyBadge() {
+  const pool = loadKeyPool();
+  const activeIdx = pool.findIndex(k => !k.exhausted);
+  const subEl = document.getElementById('gen-sub');
+  if (subEl && activeIdx >= 0) {
+    const total = pool.length;
+    subEl.textContent += ` · Chave ${activeIdx + 1} de ${total}`;
+  }
+}
+
 // ── Gemini request com retry automático (429) ──────
 async function geminiRequest(parts, maxRetries) {
   maxRetries = maxRetries || 5;
-  const geminiKey = localStorage.getItem('geminiKey') || '';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+  // chave ativa é gerenciada pelo pool — getActiveKey() rotaciona automaticamente
   let lastError;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const activeKey = getActiveKey();
+    if(!activeKey) throw new Error('TODAS_ESGOTADAS: Todas as chaves Gemini atingiram o limite diario. Adicione novas chaves ou aguarde o reset a meia-noite.');
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -574,11 +729,24 @@ async function geminiRequest(parts, maxRetries) {
     const isRPD = !retrySec || retrySec > 600;
 
     if (isRPD) {
-      // cota diaria esgotada - retry inutl, avisa e encerra imediatamente
-      throw new Error(
-        'COTA_DIARIA: Limite diario de requisicoes do Gemini atingido. ' +
-        'A cota renova a meia-noite (horario de Brasilia). Tente novamente amanha.'
-      );
+      // marca chave atual como esgotada e tenta a proxima sem contar como attempt
+      markKeyExhausted(activeKey);
+      const nextKey = getActiveKey();
+      if (nextKey) {
+        // tem proxima chave disponivel — continua sem decrementar attempt
+        const msgEl = document.getElementById('gen-msg');
+        const subEl = document.getElementById('gen-sub');
+        if (msgEl) msgEl.textContent = '🔄 Chave esgotada — alternando para proxima chave...';
+        if (subEl) subEl.textContent = 'Tentando com outra chave em 2s...';
+        await new Promise(r => setTimeout(r, 2000));
+        continue; // volta ao topo do for sem incrementar attempt
+      } else {
+        // todas as chaves esgotadas
+        throw new Error(
+          'TODAS_ESGOTADAS: Todas as chaves Gemini atingiram o limite diario. ' +
+          'Adicione novas chaves em Configuracoes ou aguarde o reset a meia-noite (horario de Brasilia).'
+        );
+      }
     }
 
     // RPM - espera o tempo sugerido + 5s de margem e tenta novamente
@@ -625,6 +793,7 @@ window.generateAndCreate=async function(){
   showScreen('screen-generating');
   document.getElementById('gen-msg').textContent='Gerando '+nq+' questões com IA...';
   document.getElementById('gen-sub').textContent=materialContext?'Base: '+materialContext.name+' · Nível: '+nivel:'Tema: '+tema+' · Nível: '+nivel;
+  showActiveKeyBadge();
   const baseRule=materialContext
     ?`Gere exatamente ${nq} questões de múltipla escolha sobre "${tema}" (nível ${nivel}) baseadas EXCLUSIVAMENTE no material fornecido. Não invente conteúdo fora do material.`
     :`Crie exatamente ${nq} questões de múltipla escolha de Matemática para o Ensino Médio Técnico (ETEC) sobre "${tema}", nível ${nivel}.`;
@@ -665,10 +834,10 @@ Responda APENAS com JSON válido, sem texto antes ou depois:
   }catch(e){
     const msgEl=document.getElementById('gen-msg');
     const subEl=document.getElementById('gen-sub');
-    const isRPD=e.message.startsWith('COTA_DIARIA:');
-    if(isRPD){
-      if(msgEl)msgEl.textContent='📵 Limite diário da API atingido';
-      if(subEl)subEl.textContent='A cota do Gemini renova à meia-noite (horário de Brasília). Voltando...';
+    const isAllExhausted=e.message.startsWith('TODAS_ESGOTADAS:');
+    if(isAllExhausted){
+      if(msgEl)msgEl.textContent='📵 Todas as chaves atingiram o limite diário';
+      if(subEl)subEl.textContent='Adicione novas chaves em Configurações ou aguarde o reset à meia-noite. Voltando...';
     }else{
       if(msgEl)msgEl.textContent='Erro: '+e.message;
       if(subEl)subEl.textContent='Voltando para o setup em 4 segundos...';
@@ -1027,8 +1196,12 @@ window.exportResults=async function(){
 }
 
 window.saveConfig=async function(){
-  const geminiKey=document.getElementById('gemini-key').value.trim();
-  if(!geminiKey||!geminiKey.startsWith('AIza')){showError('config-error','Chave Gemini inválida.');return;}
+  // coleta todas as chaves preenchidas
+  const keyInputs=document.querySelectorAll('.gemini-key-input');
+  const keys=Array.from(keyInputs).map(i=>i.value.trim()).filter(k=>k.length>0);
+  if(keys.length===0){showError('config-error','Adicione pelo menos uma chave Gemini.');return;}
+  const invalid=keys.find(k=>!k.startsWith('AIza'));
+  if(invalid){showError('config-error','Chave inválida — deve começar com AIza.');return;}
   const fields=['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId'];
   const cfg={};
   for(const f of fields){
@@ -1036,7 +1209,7 @@ window.saveConfig=async function(){
     if(!v&&f!=='storageBucket'&&f!=='messagingSenderId'){showError('config-error','Preencha: '+f);return;}
     cfg[f]=v;
   }
-  localStorage.setItem('geminiKey',geminiKey);
+  saveGeminiKeys(keys);
   try{
     const app=initializeApp(cfg,'main');db=getDatabase(app);
     await get(ref(db,'.info/connected'));
@@ -1050,8 +1223,7 @@ window.newQuiz=function(){questions=[];currentQIdx=0;clearMaterial();showScreen(
 window.resetConfig=function(){localStorage.removeItem('fbConfig');location.reload();}
 
 function initApp(){
-  const savedKey=localStorage.getItem('geminiKey');
-  if(savedKey){const el=document.getElementById('gemini-key');if(el)el.value=savedKey;}
+  renderKeyRows(); // sempre renderiza o painel de chaves (vazio ou preenchido)
   const saved=loadConfig();
   if(!saved){showScreen('screen-config');return;}
   if(!saved.apiKey||saved.apiKey.length<10||!saved.databaseURL||!saved.databaseURL.includes('firebaseio.com')){localStorage.removeItem('fbConfig');showScreen('screen-config');return;}
